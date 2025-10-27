@@ -1,14 +1,10 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=thesis_manager
-      - POSTGRES_USER=thesis_user
-      - POSTGRES_PASSWORD=thesis_password
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U thesis_user -d thesis_manager"]
       interval: 5s
@@ -23,29 +19,8 @@ services:
       - static_volume:/app/staticfiles
     expose:
       - "8000"
-    environment:
-      - DEBUG=1
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - DATABASE_URL=postgresql://thesis_user:thesis_password@db:5432/thesis_manager
-      - POSTGRES_NAME=thesis_manager
-      - POSTGRES_USER=thesis_user
-      - POSTGRES_PASSWORD=thesis_password
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      # Reverse proxy configuration (uncomment when behind nginx/traefik)
-      # - ALLOWED_HOSTS=theses.example.com,thesis-manager.example.com
-      # - CSRF_TRUSTED_ORIGINS=https://theses.example.com,https://thesis-manager.example.com
-      # - USE_X_FORWARDED_HOST=True
-      # - USE_X_FORWARDED_PORT=True
-      # - SECURE_PROXY_SSL_HEADER=True
-      # Email configuration (uncomment and configure to enable email features)
-      # - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-      # - EMAIL_HOST=smtp.gmail.com
-      # - EMAIL_PORT=587
-      # - EMAIL_USE_TLS=True
-      # - EMAIL_HOST_USER=your-email@gmail.com
-      # - EMAIL_HOST_PASSWORD=your-app-password
-      # - DEFAULT_FROM_EMAIL=thesis-manager@yourdomain.com
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy

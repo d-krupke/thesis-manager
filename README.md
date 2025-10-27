@@ -50,7 +50,18 @@ A Django-based web application for managing student theses at academic institute
    cd /path/to/thesis-manager
    ```
 
-2. **Build and start the containers**:
+2. **Create environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and update the values as needed:
+   - `SECRET_KEY` - Generate a secure key for production
+   - `DEBUG` - Set to `0` for production
+   - `POSTGRES_PASSWORD` - Change from default
+   - Configure email settings if needed
+
+3. **Build and start the containers**:
    ```bash
    docker-compose up --build
    ```
@@ -63,41 +74,64 @@ A Django-based web application for managing student theses at academic institute
    - Collect static files
    - Start Gunicorn WSGI server
 
-3. **Create a superuser** (in a new terminal):
+4. **Create a superuser** (in a new terminal):
    ```bash
    docker-compose exec web python manage.py createsuperuser
    ```
 
    Follow the prompts to create an admin account.
 
-4. **Access the application**:
+5. **Access the application**:
    - Main interface: http://localhost
    - Django admin: http://localhost/admin
 
-## Email Configuration (Optional)
+## Configuration
+
+### Environment Variables
+
+All configuration is managed through the `.env` file (created from `.env.example`). Key variables:
+
+**Django Settings:**
+- `DEBUG` - Enable debug mode (1) or production mode (0)
+- `SECRET_KEY` - Django secret key (generate a new one for production!)
+- `ALLOWED_HOSTS` - Comma-separated list of allowed hostnames
+
+**Database:**
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` - Database credentials
+- `POSTGRES_HOST`, `POSTGRES_PORT` - Database connection details
+
+**Reverse Proxy (for production with HTTPS):**
+- `CSRF_TRUSTED_ORIGINS` - Comma-separated list of trusted origins
+- `USE_X_FORWARDED_HOST`, `USE_X_FORWARDED_PORT` - Enable proxy headers
+- `SECURE_PROXY_SSL_HEADER` - Enable HTTPS detection through proxy
+
+**Email (optional):**
+- `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT` - SMTP configuration
+- `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` - SMTP auth
+- `DEFAULT_FROM_EMAIL`, `SERVER_EMAIL` - From addresses
+
+### Email Configuration (Optional)
 
 The system supports email notifications and password reset via email. Email configuration is optional but recommended for production use.
 
-### Features Requiring Email
+#### Features Requiring Email
 
 1. **Password Reset**: Users can reset forgotten passwords via email
 2. **Comment Notifications**: Supervisors receive email notifications when comments are added to their theses
 
-### Setting Up Email
+#### Setting Up Email
 
-1. **Edit `docker-compose.yml`** and uncomment the email environment variables:
+1. **Edit `.env`** and uncomment/configure the email variables:
 
-```yaml
-environment:
-  # ... other variables ...
-  # Email configuration (uncomment and configure to enable email features)
-  - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-  - EMAIL_HOST=smtp.gmail.com  # Your SMTP server
-  - EMAIL_PORT=587
-  - EMAIL_USE_TLS=True
-  - EMAIL_HOST_USER=your-email@gmail.com
-  - EMAIL_HOST_PASSWORD=your-app-password
-  - DEFAULT_FROM_EMAIL=thesis-manager@yourdomain.com
+```bash
+# Email configuration (uncomment and configure to enable email features)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=thesis-manager@yourdomain.com
 ```
 
 2. **For Gmail** (recommended for testing):
