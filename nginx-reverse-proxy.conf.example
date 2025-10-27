@@ -1,0 +1,97 @@
+# Nginx Reverse Proxy Configuration Example
+# Place this file in /etc/nginx/sites-available/ and create a symlink to sites-enabled/
+#
+# Usage:
+#   sudo ln -s /etc/nginx/sites-available/theses.example.com.conf /etc/nginx/sites-enabled/
+#   sudo nginx -t
+#   sudo systemctl reload nginx
+#
+# For HTTPS with Let's Encrypt:
+#   sudo certbot --nginx -d theses.example.com
+
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name theses.example.com;
+
+    # Uncomment for HTTPS redirect (after obtaining SSL certificate)
+    # return 301 https://$server_name$request_uri;
+
+    # For testing HTTP only, comment out the return above and uncomment below:
+    location / {
+        proxy_pass http://127.0.0.1:8001;  # Adjust port if different
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+
+# HTTPS Configuration (uncomment after obtaining SSL certificate)
+# server {
+#     listen 443 ssl http2;
+#     server_name theses.example.com;
+#
+#     # SSL Configuration (Let's Encrypt will auto-configure these)
+#     ssl_certificate /etc/letsencrypt/live/theses.example.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/theses.example.com/privkey.pem;
+#
+#     # SSL Settings
+#     ssl_protocols TLSv1.2 TLSv1.3;
+#     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+#     ssl_prefer_server_ciphers off;
+#     ssl_session_cache shared:SSL:10m;
+#     ssl_session_timeout 10m;
+#
+#     # Max upload size
+#     client_max_body_size 100M;
+#
+#     location / {
+#         proxy_pass http://127.0.0.1:8001;  # Adjust port to match your setup
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto https;
+#         proxy_set_header X-Forwarded-Host $host;
+#         proxy_set_header X-Forwarded-Port $server_port;
+#
+#         proxy_connect_timeout 60s;
+#         proxy_send_timeout 60s;
+#         proxy_read_timeout 60s;
+#     }
+#
+#     # Optional: Let nginx serve static files directly (for better performance)
+#     # Adjust path to match your deployment location
+#     # location /static/ {
+#     #     alias /path/to/thesis-manager/staticfiles/;
+#     #     expires 30d;
+#     #     add_header Cache-Control "public, immutable";
+#     # }
+#
+#     # location /media/ {
+#     #     alias /path/to/thesis-manager/media/;
+#     #     expires 7d;
+#     # }
+# }
+
+# Alternative: Using Docker network (if nginx is also containerized)
+#
+# 1. Create shared network:
+#    docker network create web-proxy
+#
+# 2. Add to docker-compose.yml:
+#    networks:
+#      - default
+#      - web-proxy
+#    networks:
+#      web-proxy:
+#        external: true
+#
+# 3. Use container name in proxy_pass:
+#    proxy_pass http://thesis-manager-web-1:8000;

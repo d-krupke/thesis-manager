@@ -32,6 +32,12 @@ services:
       - POSTGRES_PASSWORD=thesis_password
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
+      # Reverse proxy configuration (uncomment when behind nginx/traefik)
+      # - ALLOWED_HOSTS=theses.example.com,thesis-manager.example.com
+      # - CSRF_TRUSTED_ORIGINS=https://theses.example.com,https://thesis-manager.example.com
+      # - USE_X_FORWARDED_HOST=True
+      # - USE_X_FORWARDED_PORT=True
+      # - SECURE_PROXY_SSL_HEADER=True
       # Email configuration (uncomment and configure to enable email features)
       # - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
       # - EMAIL_HOST=smtp.gmail.com

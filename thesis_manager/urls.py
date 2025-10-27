@@ -32,6 +32,9 @@ urlpatterns = [
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('accounts/reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 
+    # API URLs
+    path('api/', include('theses.api.urls')),
+
     # Main app URLs
     path('', include('theses.urls')),
 ]

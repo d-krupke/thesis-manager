@@ -19,6 +19,13 @@ A Django-based web application for managing student theses at academic institute
   - Password change functionality for all users
   - Password reset via email (when email is configured)
   - Secure authentication with Django's built-in system
+- **REST API**:
+  - Full programmatic access to all thesis management functionality
+  - Secure token-based authentication (Knox)
+  - Automatic OpenAPI/Swagger documentation
+  - Support for filtering, search, and pagination
+  - Multiple tokens per user for different applications
+  - See [API.md](API.md) for complete documentation
 - **Git Repository Links**: Track student repository URLs
 - **Filtering & Search**: Filter by phase, thesis type, and search by title or student name
 - **Django Admin Interface**: Full administrative access for advanced management
@@ -208,7 +215,41 @@ Theses go through these phases:
 - **Thesis List** (`/`): Overview table of all theses with filtering and search
 - **Thesis Detail** (`/thesis/<id>/`): Complete information about a thesis
 - **Student Detail** (`/student/<id>/`): Student information and their theses
+- **Student List** (`/students/`): Overview of all students
+- **Supervisor List** (`/supervisors/`): Overview of all supervisors
+- **Supervisor Detail** (`/supervisor/<id>/`): Supervisor information and supervised theses
 - **Edit Forms**: Update thesis, student, or supervisor information
+
+## API Access
+
+The Thesis Manager provides a comprehensive REST API for programmatic access.
+
+### Using the API
+
+1. **Create an API Token**:
+   - Log in to the web interface
+   - Navigate to **API** → **My API Tokens**
+   - Click **Create New Token**
+   - Copy and save the token securely
+
+2. **Make API Requests**:
+   ```bash
+   curl -H "Authorization: Token YOUR_TOKEN" http://localhost/api/theses/
+   ```
+
+3. **View Documentation**:
+   - Interactive Swagger UI: http://localhost/api/docs/
+   - ReDoc: http://localhost/api/redoc/
+   - See [API.md](API.md) for complete usage guide
+
+### API Endpoints
+
+- `/api/theses/` - Manage theses
+- `/api/students/` - Manage students
+- `/api/supervisors/` - Manage supervisors
+- `/api/comments/` - Manage comments
+
+For detailed API documentation, examples, and best practices, see **[API.md](API.md)**.
 
 ## Docker Commands
 
@@ -255,18 +296,40 @@ docker-compose exec -T db psql -U thesis_user thesis_manager < backup.sql
 
 ## Production Deployment
 
-For production deployment:
+For production deployment behind an nginx reverse proxy on a subdomain, please refer to the comprehensive **[DEPLOYMENT.md](DEPLOYMENT.md)** guide.
 
-1. **Update environment variables**:
-   - Set `DEBUG=0` in docker-compose.yml
-   - Generate a new `SECRET_KEY`
-   - Set `ALLOWED_HOSTS` to your domain
+The deployment guide covers:
+- Setting up nginx as a reverse proxy
+- Configuring environment variables for reverse proxy operation
+- SSL/TLS setup with Let's Encrypt
+- Security best practices
+- Backup and monitoring procedures
+- Troubleshooting common issues
 
-2. **Set up SSL/TLS** with Let's Encrypt or your certificate provider by updating the nginx configuration
+### Quick Start for Production
 
-3. **Update nginx.conf** to listen on port 443 for HTTPS and add SSL certificate paths
+1. **Update environment variables** in `docker-compose.yml`:
+   ```yaml
+   - DEBUG=0
+   - SECRET_KEY=<generate-secure-key>
+   - ALLOWED_HOSTS=theses.example.com
+   - CSRF_TRUSTED_ORIGINS=https://theses.example.com
+   - USE_X_FORWARDED_HOST=True
+   - USE_X_FORWARDED_PORT=True
+   - SECURE_PROXY_SSL_HEADER=True
+   ```
 
-The application already includes nginx for serving static files efficiently. Static files are served directly by nginx from the `/app/staticfiles/` volume, while application requests are proxied to the Gunicorn WSGI server.
+2. **Configure nginx** as a reverse proxy (see [DEPLOYMENT.md](DEPLOYMENT.md))
+
+3. **Set up SSL** with Let's Encrypt:
+   ```bash
+   sudo certbot --nginx -d theses.example.com
+   ```
+
+4. **Start the application**:
+   ```bash
+   docker-compose up -d
+   ```
 
 ## Database Schema
 

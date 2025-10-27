@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from knox.models import AuthToken
 from .models import Thesis, Student, Supervisor, Comment
 from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm
 
@@ -296,3 +297,61 @@ def delete_comment(request, pk):
         messages.success(request, 'Comment deleted successfully.')
 
     return redirect('thesis_detail', pk=thesis_pk)
+
+
+# API Token Management Views
+
+@login_required
+def api_tokens_list(request):
+    """List all API tokens for the current user"""
+    tokens = AuthToken.objects.filter(user=request.user)
+    context = {
+        'tokens': tokens,
+    }
+    return render(request, 'theses/api_tokens.html', context)
+
+
+@login_required
+@require_POST
+def api_token_create(request):
+    """Create a new API token for the current user"""
+    # Check if user has reached the token limit
+    token_count = AuthToken.objects.filter(user=request.user).count()
+    max_tokens = 10  # Same as in settings
+
+    if token_count >= max_tokens:
+        messages.error(request, f'You have reached the maximum number of tokens ({max_tokens}). Please delete an existing token first.')
+        return redirect('api_tokens_list')
+
+    # Create the token
+    instance, token = AuthToken.objects.create(user=request.user)
+
+    # Store the token in session to display it once
+    request.session['new_api_token'] = token
+    messages.success(request, 'API token created successfully. Make sure to copy it now - you won\'t be able to see it again!')
+
+    return redirect('api_tokens_list')
+
+
+@login_required
+@require_POST
+def api_token_delete(request, token_id):
+    """Delete an API token"""
+    try:
+        # Get the token - Knox stores a hash, so we need to get by primary key
+        token = AuthToken.objects.get(pk=token_id, user=request.user)
+        token.delete()
+        messages.success(request, 'API token deleted successfully.')
+    except AuthToken.DoesNotExist:
+        messages.error(request, 'Token not found or you don\'t have permission to delete it.')
+
+    return redirect('api_tokens_list')
+
+
+@login_required
+@require_POST
+def api_tokens_delete_all(request):
+    """Delete all API tokens for the current user"""
+    count = AuthToken.objects.filter(user=request.user).delete()[0]
+    messages.success(request, f'Deleted {count} API token(s).')
+    return redirect('api_tokens_list')

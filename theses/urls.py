@@ -26,4 +26,10 @@ urlpatterns = [
     path('thesis/<int:thesis_pk>/comment/add/', views.add_comment, name='add_comment'),
     path('comment/<int:pk>/edit/', views.edit_comment, name='edit_comment'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
+
+    # API Token Management URLs
+    path('api-tokens/', views.api_tokens_list, name='api_tokens_list'),
+    path('api-tokens/create/', views.api_token_create, name='api_token_create'),
+    path('api-tokens/<str:token_id>/delete/', views.api_token_delete, name='api_token_delete'),
+    path('api-tokens/delete-all/', views.api_tokens_delete_all, name='api_tokens_delete_all'),
 ]

@@ -28,6 +28,20 @@ DEBUG = os.environ.get('DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+# Proxy and CSRF settings for reverse proxy deployment
+# Set CSRF_TRUSTED_ORIGINS to include your domain(s) when behind a reverse proxy
+# Example: CSRF_TRUSTED_ORIGINS=https://theses.example.com,https://thesis-manager.example.com
+csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin.strip()]
+
+# Enable these when running behind a reverse proxy (nginx, traefik, etc.)
+USE_X_FORWARDED_HOST = os.environ.get('USE_X_FORWARDED_HOST', 'False') == 'True'
+USE_X_FORWARDED_PORT = os.environ.get('USE_X_FORWARDED_PORT', 'False') == 'True'
+
+# Enable this when your reverse proxy handles HTTPS
+if os.environ.get('SECURE_PROXY_SSL_HEADER', 'False') == 'True':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
@@ -38,6 +52,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'knox',
+    'drf_spectacular',
     'theses',
 ]
 
@@ -150,3 +167,39 @@ SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
 # Email notifications enabled (only if proper email backend is configured)
 EMAIL_NOTIFICATIONS_ENABLED = EMAIL_HOST and EMAIL_HOST_USER
+
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'knox.auth.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,
+}
+
+# Knox settings
+# Note: Use a hashlib algorithm callable/path so Knox receives an object
+# implementing the standard .update()/.digest() interface.
+REST_KNOX = {
+    'SECURE_HASH_ALGORITHM': 'hashlib.sha512',
+    'AUTH_TOKEN_CHARACTER_LENGTH': 64,
+    'TOKEN_TTL': None,  # Tokens don't expire by default
+    'USER_SERIALIZER': 'theses.api.serializers.UserSerializer',
+    'TOKEN_LIMIT_PER_USER': 10,  # Maximum 10 tokens per user
+    'AUTO_REFRESH': False,
+}
+
+# drf-spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Thesis Manager API',
+    'DESCRIPTION': 'API for managing student theses, supervisors, and students',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+}
