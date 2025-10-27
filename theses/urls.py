@@ -1,11 +1,72 @@
+"""
+URLS.PY - URL Routing Configuration
+====================================
+
+This file maps URLs to views. When a user visits a URL, Django matches it
+against these patterns and calls the corresponding view.
+
+WHAT BELONGS HERE:
+------------------
+1. URL patterns (path or re_path)
+2. Name assignments for URLs (for reverse lookup)
+3. URL parameters (like <int:pk>)
+
+URL PATTERNS:
+-------------
+path('url/', view, name='url_name')
+
+- First argument: URL pattern as string
+- Second argument: View function or .as_view() for class-based views
+- name: Used for reverse lookup in templates and code
+
+URL PARAMETERS:
+---------------
+- <int:pk>: Captures an integer, passes it as 'pk' to the view
+- <str:slug>: Captures a string (letters, numbers, hyphens, underscores)
+- <uuid:id>: Captures a UUID
+- <path:url>: Captures any string including slashes
+
+Examples:
+- path('thesis/5/', ...) matches exact URL
+- path('thesis/<int:pk>/', ...) matches /thesis/1/, /thesis/999/, etc.
+- path('search/<str:query>/', ...) matches /search/machine-learning/, etc.
+
+REVERSE URL LOOKUP:
+-------------------
+Instead of hardcoding URLs, use the 'name' for reverse lookup:
+
+In templates:
+    {% url 'thesis_detail' pk=5 %}  → /thesis/5/
+
+In Python code:
+    reverse('thesis_detail', kwargs={'pk': 5})  → '/thesis/5/'
+
+In models:
+    def get_absolute_url(self):
+        return reverse('thesis_detail', kwargs={'pk': self.pk})
+
+HOW TO ADD A NEW URL:
+---------------------
+1. Add a path() to urlpatterns list
+2. Give it a unique name
+3. Map it to a view
+4. Use URL parameters if needed
+
+Example:
+    path('thesis/<int:pk>/archive/', views.archive_thesis, name='thesis_archive'),
+"""
+
 from django.urls import path
 from . import views
 
+# urlpatterns is a list of URL patterns Django will try to match (in order)
 urlpatterns = [
-    # Main views
+    # Root URL (homepage) - matches http://localhost/
     path('', views.ThesisListView.as_view(), name='thesis_list'),
 
     # Thesis URLs
+    # <int:pk>: Captures the thesis ID from URL, passes to view as pk parameter
+    # Example: /thesis/5/ captures pk=5
     path('thesis/<int:pk>/', views.ThesisDetailView.as_view(), name='thesis_detail'),
     path('thesis/new/', views.ThesisCreateView.as_view(), name='thesis_create'),
     path('thesis/<int:pk>/edit/', views.ThesisUpdateView.as_view(), name='thesis_update'),

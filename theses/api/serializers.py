@@ -1,18 +1,80 @@
+"""
+API SERIALIZERS.PY - Data Transformation for API
+=================================================
+
+Serializers convert Django models to/from JSON for the API.
+Think of them as translators between Python objects and JSON.
+
+WHAT BELONGS HERE:
+------------------
+1. Serializer classes (usually ModelSerializer)
+2. Field definitions and customizations
+3. Validation logic for API inputs
+4. Computed/read-only fields
+
+SERIALIZERS vs FORMS:
+---------------------
+- Forms: For HTML forms in web interface
+- Serializers: For JSON data in REST API
+- Similar concepts, different use cases
+
+HOW SERIALIZERS WORK:
+---------------------
+1. Deserialization (JSON → Python):
+   - Receive JSON from API request
+   - Validate the data
+   - Convert to Python objects
+   - Save to database
+
+2. Serialization (Python → JSON):
+   - Read from database
+   - Convert to Python dict
+   - Return as JSON to API client
+
+COMMON FIELD TYPES:
+-------------------
+- CharField: Text fields
+- IntegerField: Numbers
+- DateField/DateTimeField: Dates
+- BooleanField: True/False
+- SerializerMethodField: Custom computed fields
+- PrimaryKeyRelatedField: References to other models (IDs)
+- Nested serializers: Full objects instead of just IDs
+
+EXAMPLE:
+--------
+class MySerializer(serializers.ModelSerializer):
+    # Custom computed field
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MyModel
+        fields = ['id', 'name', 'full_name']
+        read_only_fields = ['id']  # Can't be changed via API
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+"""
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from theses.models import Student, Supervisor, Thesis, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for User model (used by Knox)"""
+    """Serializer for User model (used by Knox for auth response)"""
     class Meta:
         model = User
+        # Only expose these fields via API (security!)
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
+        # These fields can't be modified via API
         read_only_fields = ('id', 'username')
 
 
 class StudentSerializer(serializers.ModelSerializer):
-    """Serializer for Student model"""
+    """Serializer for Student model with computed thesis count"""
+    # SerializerMethodField: Computed field (read-only)
+    # Requires a get_<field_name> method (see below)
     thesis_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,6 +86,18 @@ class StudentSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at')
 
     def get_thesis_count(self, obj):
+        """
+        Calculate value for 'thesis_count' field.
+
+        SerializerMethodField calls this method to get the field value.
+        Pattern: get_<field_name>(self, obj)
+
+        Args:
+            obj: The Student instance being serialized
+
+        Returns:
+            int: Number of theses for this student
+        """
         return obj.theses.count()
 
 
@@ -61,6 +135,8 @@ class SupervisorListSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer for Comment model"""
+    # source='user.username': Access nested field
+    # Follows ForeignKey relationship: comment.user.username
     user_name = serializers.CharField(source='user.username', read_only=True)
     user_full_name = serializers.SerializerMethodField()
 
@@ -84,10 +160,25 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ThesisSerializer(serializers.ModelSerializer):
-    """Detailed serializer for Thesis model"""
+    """
+    Detailed serializer for Thesis model with nested relationships.
+
+    Demonstrates NESTED SERIALIZERS - including full related objects
+    instead of just IDs.
+
+    Compare:
+    - 'students': [1, 2] (just IDs - for writing)
+    - 'students_details': [{id: 1, name: "John"}, ...] (full objects - for reading)
+    """
+    # Nested serializers: Include full student/supervisor objects
+    # many=True: There can be multiple students/supervisors
+    # read_only=True: Only for output, not input
     students_details = StudentListSerializer(source='students', many=True, read_only=True)
     supervisors_details = SupervisorListSerializer(source='supervisors', many=True, read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
+
+    # Call model methods to get human-readable choice labels
+    # source='get_thesis_type_display': Calls Django's auto-generated method
     thesis_type_display = serializers.CharField(source='get_thesis_type_display', read_only=True)
     phase_display = serializers.CharField(source='get_phase_display', read_only=True)
 

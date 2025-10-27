@@ -1,31 +1,126 @@
+"""
+MODELS.PY - Database Structure Definitions
+==========================================
+
+This file defines the DATABASE SCHEMA - the structure of your database tables.
+Each class represents a table, and each field represents a column in that table.
+
+WHAT BELONGS HERE:
+------------------
+1. Model classes (database tables)
+2. Field definitions (columns and their types)
+3. Relationships between models (ForeignKey, ManyToMany)
+4. Model methods that operate on single instances
+5. Properties that compute values from the model's data
+
+HOW TO ADD A NEW FIELD:
+-----------------------
+1. Add it to the model class:
+   new_field = models.CharField(max_length=100, blank=True)
+
+2. Create and run migrations:
+   docker-compose exec web python manage.py makemigrations
+   docker-compose exec web python manage.py migrate
+
+COMMON FIELD TYPES:
+-------------------
+- CharField(max_length=X): Short text (names, titles)
+- TextField(): Long text (descriptions, comments)
+- EmailField(): Email addresses (validates format)
+- URLField(): Web addresses
+- DateField(): Dates (YYYY-MM-DD)
+- DateTimeField(): Dates with times
+- IntegerField(): Whole numbers
+- BooleanField(): True/False values
+- ForeignKey(): Link to another model (one-to-many)
+- ManyToManyField(): Link to multiple instances of another model
+
+COMMON FIELD OPTIONS:
+--------------------
+- blank=True: Field can be empty in forms
+- null=True: Field can be NULL in database
+- default='value': Default value if not provided
+- unique=True: Value must be unique across all records
+- help_text='...': Help text shown in forms/admin
+- choices=[...]: List of valid choices for the field
+
+KEY MODEL METHODS:
+------------------
+- __str__(self): How the object appears as text (required!)
+- get_absolute_url(self): Returns URL to view this object
+- @property methods: Computed fields that look like attributes
+"""
+
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 
 
 class Student(models.Model):
+    """
+    Student model - represents a student who can write theses.
+
+    This creates a 'theses_student' table in the database.
+    Each instance of this class is one row in that table.
+    """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     student_id = models.CharField(max_length=50, blank=True, null=True)
     comments = models.TextField(blank=True, help_text="Free text comments about the student")
+    # auto_now_add=True: Sets timestamp automatically when record is created (never changes)
     created_at = models.DateTimeField(auto_now_add=True)
+    # auto_now=True: Updates timestamp automatically whenever record is saved
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['last_name', 'first_name']
+        """
+        Meta class - configuration for this model.
+
+        Common Meta options:
+        - ordering: Default order when querying (e.g., ['last_name', 'first_name'])
+        - verbose_name: Human-readable singular name
+        - verbose_name_plural: Human-readable plural name
+        - unique_together: Fields that must be unique together
+        """
+        ordering = ['last_name', 'first_name']  # Sort by last name, then first name
 
     def __str__(self):
+        """
+        String representation - how this object appears as text.
+
+        Used in:
+        - Django admin interface
+        - Dropdowns and select boxes
+        - String conversions (str(student))
+        - Debugging output
+
+        Always define this method! Makes your life much easier.
+        """
         return f"{self.first_name} {self.last_name}"
 
     def get_absolute_url(self):
+        """
+        Returns the canonical URL for viewing this object.
+
+        The 'reverse' function looks up a URL by its name (from urls.py)
+        and fills in any parameters (like 'pk' for primary key).
+
+        Example: reverse('student_detail', kwargs={'pk': 5})
+                 returns '/student/5/'
+        """
         return reverse('student_detail', kwargs={'pk': self.pk})
 
 
 class Supervisor(models.Model):
+    """
+    Supervisor model - represents a thesis supervisor/advisor.
+
+    Supervisors can supervise multiple theses (see ManyToManyField in Thesis model).
+    """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True)  # unique=True: No two supervisors can have same email
     comments = models.TextField(blank=True, help_text="Free text comments about the supervisor")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -41,8 +136,17 @@ class Supervisor(models.Model):
 
 
 class Thesis(models.Model):
+    """
+    Thesis model - represents a student thesis (bachelor, master, project work).
+
+    This is the central model that connects students and supervisors through
+    ManyToMany relationships. It tracks the thesis through all its phases.
+    """
+
+    # CHOICES: List of tuples (value_in_db, human_readable_label)
+    # Used to create dropdown menus and validate input
     THESIS_TYPES = [
-        ('bachelor', 'Bachelor Thesis'),
+        ('bachelor', 'Bachelor Thesis'),  # Stored as 'bachelor', displayed as 'Bachelor Thesis'
         ('master', 'Master Thesis'),
         ('project', 'Project Work'),
         ('other', 'Other'),
@@ -63,11 +167,24 @@ class Thesis(models.Model):
 
     # Basic information
     title = models.CharField(max_length=500, blank=True, help_text="Thesis title (can be added later)")
+    # choices=THESIS_TYPES: Restricts values to those in THESIS_TYPES list
     thesis_type = models.CharField(max_length=20, choices=THESIS_TYPES, default='bachelor')
     phase = models.CharField(max_length=30, choices=PHASES, default='first_contact')
 
-    # Relationships
+    # Relationships (the "magic" part of Django!)
+    #
+    # ManyToManyField creates a relationship where:
+    # - One thesis can have multiple students (rare, but possible)
+    # - One student can have multiple theses (bachelor, master, etc.)
+    # - Django automatically creates a "join table" to manage this relationship
+    #
+    # related_name='theses': Allows reverse lookup from Student
+    #   Example: student.theses.all() gets all theses for a student
     students = models.ManyToManyField(Student, related_name='theses')
+
+    # Same for supervisors - creates many-to-many relationship
+    # related_name='supervised_theses': Avoid confusion with 'theses'
+    #   Example: supervisor.supervised_theses.all() gets all their theses
     supervisors = models.ManyToManyField(Supervisor, related_name='supervised_theses')
 
     # Dates
@@ -104,7 +221,18 @@ class Thesis(models.Model):
 
     @property
     def primary_student(self):
-        """Returns the first student (for UI purposes)"""
+        """
+        Property decorator - makes this method look like an attribute.
+
+        Usage: thesis.primary_student (not thesis.primary_student())
+
+        Properties are useful for:
+        - Computed fields that don't need to be stored in database
+        - Convenience methods that read like attributes
+        - Backwards compatibility when refactoring
+
+        Returns the first student (for UI purposes where only one is shown).
+        """
         return self.students.first()
 
     @property
@@ -114,14 +242,33 @@ class Thesis(models.Model):
 
 
 class Comment(models.Model):
+    """
+    Comment model - represents comments on theses.
+
+    Can be manually created by users or auto-generated by signals (see signals.py)
+    when dates or phases change.
+    """
+
+    # ForeignKey creates a ONE-TO-MANY relationship:
+    # - One thesis can have multiple comments
+    # - Each comment belongs to exactly one thesis
+    #
+    # on_delete=models.CASCADE: When thesis is deleted, delete all its comments
+    # related_name='comments': Allows reverse lookup
+    #   Example: thesis.comments.all() gets all comments for a thesis
     thesis = models.ForeignKey(Thesis, on_delete=models.CASCADE, related_name='comments')
+
+    # on_delete=models.SET_NULL: When user is deleted, keep comment but set user to NULL
+    # null=True: Allow NULL in database (required when using SET_NULL)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
     text = models.TextField(help_text="Comment text")
     is_auto_generated = models.BooleanField(default=False, help_text="Was this comment auto-generated?")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # '-created_at': The minus sign means descending order (newest first)
         ordering = ['-created_at']
 
     def __str__(self):
