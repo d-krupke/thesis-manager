@@ -96,32 +96,63 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="Title or student name...">
-            </div>
-            <div class="col-md-3">
-                <label for="phase" class="form-label">Phase</label>
-                <select class="form-select" id="phase" name="phase">
-                    <option value="">All Phases</option>
-                    {% for value, label in phases %}
-                    <option value="{{ value }}" {% if value == current_phase %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="type" class="form-label">Type</label>
-                <select class="form-select" id="type" name="type">
-                    <option value="">All Types</option>
-                    {% for value, label in thesis_types %}
-                    <option value="{{ value }}" {% if value == current_type %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-secondary me-2">Filter</button>
-                <a href="{% url 'thesis_list' %}" class="btn btn-outline-secondary">Clear</a>
+        <form method="get" id="filterForm">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="search" class="form-label small mb-1">Search</label>
+                    <input type="text" class="form-control form-control-sm" id="search" name="search" value="{{ search_query }}" placeholder="Title or student name...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Phase</label>
+                    <div class="dropdown d-grid">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle text-start" type="button" id="phaseDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            <span id="phaseButtonText">
+                                {% if selected_phases|length == 8 %}
+                                    All active phases
+                                {% elif selected_phases|length == 10 %}
+                                    All phases
+                                {% else %}
+                                    {{ selected_phases|length }} selected
+                                {% endif %}
+                            </span>
+                        </button>
+                        <div class="dropdown-menu p-2" aria-labelledby="phaseDropdown" style="min-width: 250px; max-height: 350px; overflow-y: auto;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input phase-checkbox" type="checkbox" id="selectAllPhases">
+                                <label class="form-check-label fw-bold small" for="selectAllPhases">
+                                    Select All
+                                </label>
+                            </div>
+                            <hr class="my-2">
+                            {% for value, label in phases %}
+                            <div class="form-check">
+                                <input class="form-check-input phase-checkbox-item" type="checkbox" name="phase" value="{{ value }}" id="phase_{{ value }}"
+                                    {% if value in selected_phases %}checked{% endif %}>
+                                <label class="form-check-label small" for="phase_{{ value }}">
+                                    {{ label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="type" class="form-label small mb-1">Type</label>
+                    <select class="form-select form-select-sm" id="type" name="type">
+                        <option value="">All Types</option>
+                        {% for value, label in thesis_types %}
+                        <option value="{{ value }}" {% if value == current_type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-secondary btn-sm me-2">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="{% url 'thesis_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
             </div>
         </form>
     </div>
@@ -148,7 +179,7 @@
                 <tbody>
                     {% for thesis in theses %}
                     <tr>
-                        <td><span class="badge bg-info">{{ thesis.get_thesis_type_display }}</span></td>
+                        <td><span class="badge bg-primary">{{ thesis.get_thesis_type_display }}</span></td>
                         <td>
                             <a href="{% url 'thesis_detail' thesis.pk %}">
                                 {{ thesis.title|default:"(No title yet)" }}
@@ -233,4 +264,65 @@
 <div class="mt-3 text-muted">
     <small>Total: {{ page_obj.paginator.count }} theses</small>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle "Select All" checkbox functionality and button text update
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAllPhases');
+        const phaseCheckboxes = document.querySelectorAll('.phase-checkbox-item');
+        const phaseButtonText = document.getElementById('phaseButtonText');
+        const totalPhases = phaseCheckboxes.length;
+
+        // Update button text based on selections
+        function updateButtonText() {
+            const checkedCount = Array.from(phaseCheckboxes).filter(cb => cb.checked).length;
+
+            if (checkedCount === totalPhases) {
+                phaseButtonText.textContent = 'All phases';
+            } else if (checkedCount === totalPhases - 2) {
+                // Check if it's all except completed and abandoned
+                const completedChecked = document.getElementById('phase_completed').checked;
+                const abandonedChecked = document.getElementById('phase_abandoned').checked;
+                if (!completedChecked && !abandonedChecked) {
+                    phaseButtonText.textContent = 'All active phases';
+                } else {
+                    phaseButtonText.textContent = checkedCount + ' selected';
+                }
+            } else if (checkedCount === 0) {
+                phaseButtonText.textContent = 'Select phases...';
+            } else {
+                phaseButtonText.textContent = checkedCount + ' selected';
+            }
+        }
+
+        // Update "Select All" state based on individual checkboxes
+        function updateSelectAllState() {
+            const allChecked = Array.from(phaseCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(phaseCheckboxes).some(cb => cb.checked);
+
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+
+            updateButtonText();
+        }
+
+        // Initialize the "Select All" state and button text
+        updateSelectAllState();
+
+        // Handle "Select All" checkbox click
+        selectAllCheckbox.addEventListener('change', function() {
+            phaseCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectAllState();
+        });
+
+        // Handle individual checkbox clicks
+        phaseCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectAllState);
+        });
+    });
+</script>
 {% endblock %}

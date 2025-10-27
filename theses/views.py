@@ -124,12 +124,17 @@ class ThesisListView(LoginRequiredMixin, ListView):
         queryset = Thesis.objects.prefetch_related('students', 'supervisors').all()
 
         # Get URL parameters from the request
-        # Example URL: /theses/?phase=registered&type=master
-        # self.request.GET.get('phase') returns 'registered' or None
-        phase = self.request.GET.get('phase')
-        if phase:
-            # filter(phase=phase): Keep only theses with this phase
-            queryset = queryset.filter(phase=phase)
+        # Example URL: /theses/?phase=registered&phase=working&type=master
+        # self.request.GET.getlist('phase') returns ['registered', 'working'] or []
+        phases = self.request.GET.getlist('phase')
+
+        if phases:
+            # filter(phase__in=phases): Keep only theses with phase in the list
+            queryset = queryset.filter(phase__in=phases)
+        else:
+            # Default: Exclude completed and abandoned phases
+            # This keeps the overview focused on active theses
+            queryset = queryset.exclude(phase__in=['completed', 'abandoned'])
 
         thesis_type = self.request.GET.get('type')
         if thesis_type:
@@ -176,9 +181,13 @@ class ThesisListView(LoginRequiredMixin, ListView):
         context['phases'] = Thesis.PHASES
         context['thesis_types'] = Thesis.THESIS_TYPES
 
-        # Remember current filter values (to keep dropdowns selected)
-        # .get('phase', ''): Get 'phase' parameter, or '' if not present
-        context['current_phase'] = self.request.GET.get('phase', '')
+        # Remember current filter values (to keep checkboxes/dropdowns selected)
+        # .getlist('phase'): Get all 'phase' parameters as a list
+        selected_phases = self.request.GET.getlist('phase')
+        if not selected_phases:
+            # Default: All phases except completed and abandoned
+            selected_phases = [p[0] for p in Thesis.PHASES if p[0] not in ['completed', 'abandoned']]
+        context['selected_phases'] = selected_phases
         context['current_type'] = self.request.GET.get('type', '')
         context['search_query'] = self.request.GET.get('search', '')
 

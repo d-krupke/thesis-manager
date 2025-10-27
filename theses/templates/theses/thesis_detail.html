@@ -7,7 +7,7 @@
     <div>
         <h1>{{ thesis.title|default:"Thesis (No title yet)" }}</h1>
         <div class="mt-2">
-            <span class="badge bg-info me-2">{{ thesis.get_thesis_type_display }}</span>
+            <span class="badge bg-primary me-2">{{ thesis.get_thesis_type_display }}</span>
             <span class="badge
                 {% if thesis.phase == 'first_contact' %}bg-secondary
                 {% elif thesis.phase == 'topic_discussion' %}bg-info
