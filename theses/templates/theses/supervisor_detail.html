@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ supervisor }} - Supervisor Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>{{ supervisor }}</h1>
+        <p class="text-muted mb-0">
+            {% if supervisor.email %}{{ supervisor.email }}{% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'supervisor_update' supervisor.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'supervisor_list' %}" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Overview</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">Total Theses:</td>
+                            <td><span class="badge bg-primary">{{ total_theses }}</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Email:</td>
+                            <td>{{ supervisor.email }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Created:</td>
+                            <td>{{ supervisor.created_at|date:"Y-m-d" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if phase_stats %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Theses by Phase</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for phase_label, count in phase_stats.items %}
+                        <tr>
+                            <td>{{ phase_label }}</td>
+                            <td class="text-end"><span class="badge bg-secondary">{{ count }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if supervisor.comments %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Comments</h5>
+            </div>
+            <div class="card-body">
+                <div class="p-3 bg-light rounded">{{ supervisor.comments|linebreaks }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Supervised Theses</h5>
+            </div>
+            <div class="card-body">
+                {% if theses %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Student(s)</th>
+                                <th>Phase</th>
+                                <th>Registration</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for thesis in theses %}
+                            <tr>
+                                <td><span class="badge bg-info">{{ thesis.get_thesis_type_display }}</span></td>
+                                <td>
+                                    <a href="{% url 'thesis_detail' thesis.pk %}">
+                                        {{ thesis.title|default:"(No title)" }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% for student in thesis.students.all %}
+                                        <a href="{% url 'student_detail' student.pk %}">{{ student }}</a>{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        <span class="text-muted">-</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if thesis.phase == 'first_contact' %}bg-secondary
+                                        {% elif thesis.phase == 'topic_discussion' %}bg-info
+                                        {% elif thesis.phase == 'literature_research' %}bg-primary
+                                        {% elif thesis.phase == 'registered' %}bg-success
+                                        {% elif thesis.phase == 'working' %}bg-warning
+                                        {% elif thesis.phase == 'submitted' %}bg-dark
+                                        {% elif thesis.phase == 'defended' %}bg-success
+                                        {% elif thesis.phase == 'completed' %}bg-success
+                                        {% elif thesis.phase == 'abandoned' %}bg-danger
+                                        {% endif %}">
+                                        {{ thesis.get_phase_display }}
+                                    </span>
+                                </td>
+                                <td>{{ thesis.date_registration|default:"-" }}</td>
+                                <td>{{ thesis.date_deadline|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'thesis_detail' thesis.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">This supervisor is not currently supervising any theses.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

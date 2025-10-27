@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student }} - Student Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>{{ student }}</h1>
+        <p class="text-muted mb-0">
+            {% if student.email %}{{ student.email }}{% endif %}
+            {% if student.student_id %} | Student ID: {{ student.student_id }}{% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'student_update' student.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'thesis_list' %}" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Theses</h5>
+            </div>
+            <div class="card-body">
+                {% if student.theses.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Phase</th>
+                                <th>Supervisors</th>
+                                <th>Registration</th>
+                                <th>Deadline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for thesis in student.theses.all %}
+                            <tr>
+                                <td><span class="badge bg-info">{{ thesis.get_thesis_type_display }}</span></td>
+                                <td><a href="{% url 'thesis_detail' thesis.pk %}">{{ thesis.title|default:"(No title)" }}</a></td>
+                                <td>
+                                    <span class="badge
+                                        {% if thesis.phase == 'first_contact' %}bg-secondary
+                                        {% elif thesis.phase == 'topic_discussion' %}bg-info
+                                        {% elif thesis.phase == 'literature_research' %}bg-primary
+                                        {% elif thesis.phase == 'registered' %}bg-success
+                                        {% elif thesis.phase == 'working' %}bg-warning
+                                        {% elif thesis.phase == 'submitted' %}bg-dark
+                                        {% elif thesis.phase == 'defended' %}bg-success
+                                        {% elif thesis.phase == 'completed' %}bg-success
+                                        {% elif thesis.phase == 'abandoned' %}bg-danger
+                                        {% endif %}">
+                                        {{ thesis.get_phase_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% for supervisor in thesis.supervisors.all %}
+                                        {{ supervisor }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>{{ thesis.date_registration|default:"-" }}</td>
+                                <td>{{ thesis.date_deadline|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No theses assigned to this student yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Comments</h5>
+            </div>
+            <div class="card-body">
+                {% if student.comments %}
+                    <div class="p-3 bg-light rounded">{{ student.comments|linebreaks }}</div>
+                {% else %}
+                    <p class="text-muted mb-0">No comments</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Metadata</h5>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <strong>Created:</strong> {{ student.created_at|date:"Y-m-d H:i" }}<br>
+                    <strong>Last updated:</strong> {{ student.updated_at|date:"Y-m-d H:i" }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

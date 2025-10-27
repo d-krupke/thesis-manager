@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Thesis{% else %}New Thesis{% endif %} - Thesis Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 offset-lg-1">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{% if form.instance.pk %}Edit Thesis{% else %}Create New Thesis{% endif %}</h1>
+            <a href="{% if form.instance.pk %}{% url 'thesis_detail' form.instance.pk %}{% else %}{% url 'thesis_list' %}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+
+        <form method="post" class="card">
+            {% csrf_token %}
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="text-danger"><small>{{ form.title.errors }}</small></div>
+                        {% endif %}
+                        <small class="form-text text-muted">{{ form.title.help_text }}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="{{ form.thesis_type.id_for_label }}" class="form-label">{{ form.thesis_type.label }}</label>
+                        {{ form.thesis_type }}
+                        {% if form.thesis_type.errors %}
+                        <div class="text-danger"><small>{{ form.thesis_type.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2">
+                        <label for="{{ form.phase.id_for_label }}" class="form-label">{{ form.phase.label }}</label>
+                        {{ form.phase }}
+                        {% if form.phase.errors %}
+                        <div class="text-danger"><small>{{ form.phase.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.students.id_for_label }}" class="form-label">{{ form.students.label }}</label>
+                        {{ form.students }}
+                        {% if form.students.errors %}
+                        <div class="text-danger"><small>{{ form.students.errors }}</small></div>
+                        {% endif %}
+                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        <div class="mt-1">
+                            <a href="{% url 'student_create' %}" class="btn btn-sm btn-outline-secondary" target="_blank">+ New Student</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.supervisors.id_for_label }}" class="form-label">{{ form.supervisors.label }}</label>
+                        {{ form.supervisors }}
+                        {% if form.supervisors.errors %}
+                        <div class="text-danger"><small>{{ form.supervisors.errors }}</small></div>
+                        {% endif %}
+                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        <div class="mt-1">
+                            <a href="{% url 'supervisor_create' %}" class="btn btn-sm btn-outline-secondary" target="_blank">+ New Supervisor</a>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3">Timeline</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.date_first_contact.id_for_label }}" class="form-label">{{ form.date_first_contact.label }}</label>
+                        {{ form.date_first_contact }}
+                        {% if form.date_first_contact.errors %}
+                        <div class="text-danger"><small>{{ form.date_first_contact.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.date_topic_selected.id_for_label }}" class="form-label">{{ form.date_topic_selected.label }}</label>
+                        {{ form.date_topic_selected }}
+                        {% if form.date_topic_selected.errors %}
+                        <div class="text-danger"><small>{{ form.date_topic_selected.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.date_registration.id_for_label }}" class="form-label">{{ form.date_registration.label }}</label>
+                        {{ form.date_registration }}
+                        {% if form.date_registration.errors %}
+                        <div class="text-danger"><small>{{ form.date_registration.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.date_deadline.id_for_label }}" class="form-label">{{ form.date_deadline.label }}</label>
+                        {{ form.date_deadline }}
+                        {% if form.date_deadline.errors %}
+                        <div class="text-danger"><small>{{ form.date_deadline.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.date_presentation.id_for_label }}" class="form-label">{{ form.date_presentation.label }}</label>
+                        {{ form.date_presentation }}
+                        {% if form.date_presentation.errors %}
+                        <div class="text-danger"><small>{{ form.date_presentation.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.date_review.id_for_label }}" class="form-label">{{ form.date_review.label }}</label>
+                        {{ form.date_review }}
+                        {% if form.date_review.errors %}
+                        <div class="text-danger"><small>{{ form.date_review.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.date_final_discussion.id_for_label }}" class="form-label">{{ form.date_final_discussion.label }}</label>
+                        {{ form.date_final_discussion }}
+                        {% if form.date_final_discussion.errors %}
+                        <div class="text-danger"><small>{{ form.date_final_discussion.errors }}</small></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-3">
+                    <label for="{{ form.git_repository.id_for_label }}" class="form-label">{{ form.git_repository.label }}</label>
+                    {{ form.git_repository }}
+                    {% if form.git_repository.errors %}
+                    <div class="text-danger"><small>{{ form.git_repository.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.git_repository.help_text }}</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="text-danger"><small>{{ form.description.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{% if form.instance.pk %}{% url 'thesis_detail' form.instance.pk %}{% else %}{% url 'thesis_list' %}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

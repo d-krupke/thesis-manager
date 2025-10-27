@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Thesis List - Thesis Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Thesis Overview</h1>
+    <a href="{% url 'thesis_create' %}" class="btn btn-primary">New Thesis</a>
+</div>
+
+<!-- Supervisor Overview -->
+{% if supervisor_stats %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Supervisor Overview</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Supervisor</th>
+                        {% for phase_key, phase_label in phases %}
+                            <th class="text-center">{{ phase_label }}</th>
+                        {% endfor %}
+                        <th class="text-center"><strong>Total</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in supervisor_stats %}
+                    <tr>
+                        <td><strong>{{ stat.supervisor }}</strong></td>
+                        {% for phase_key, phase_label in phases %}
+                            <td class="text-center">
+                                {% for pl, count in stat.phases.items %}
+                                    {% if pl == phase_label %}
+                                        <span class="badge bg-primary">{{ count }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if phase_label not in stat.phases %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="text-center"><strong>{{ stat.total }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="Title or student name...">
+            </div>
+            <div class="col-md-3">
+                <label for="phase" class="form-label">Phase</label>
+                <select class="form-select" id="phase" name="phase">
+                    <option value="">All Phases</option>
+                    {% for value, label in phases %}
+                    <option value="{{ value }}" {% if value == current_phase %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">All Types</option>
+                    {% for value, label in thesis_types %}
+                    <option value="{{ value }}" {% if value == current_type %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-secondary me-2">Filter</button>
+                <a href="{% url 'thesis_list' %}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="sticky-header">
+                    <tr>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>Student(s)</th>
+                        <th>Supervisor(s)</th>
+                        <th>Phase</th>
+                        <th>First Contact</th>
+                        <th>Registration</th>
+                        <th>Deadline</th>
+                        <th>Presentation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for thesis in theses %}
+                    <tr>
+                        <td><span class="badge bg-info">{{ thesis.get_thesis_type_display }}</span></td>
+                        <td>
+                            <a href="{% url 'thesis_detail' thesis.pk %}">
+                                {{ thesis.title|default:"(No title yet)" }}
+                            </a>
+                        </td>
+                        <td>
+                            {% for student in thesis.students.all %}
+                                <a href="{% url 'student_detail' student.pk %}">{{ student }}</a>{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                <span class="text-muted">-</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for supervisor in thesis.supervisors.all %}
+                                {{ supervisor }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                <span class="text-muted">-</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="badge phase-badge
+                                {% if thesis.phase == 'first_contact' %}bg-secondary
+                                {% elif thesis.phase == 'topic_discussion' %}bg-info
+                                {% elif thesis.phase == 'literature_research' %}bg-primary
+                                {% elif thesis.phase == 'registered' %}bg-success
+                                {% elif thesis.phase == 'working' %}bg-warning
+                                {% elif thesis.phase == 'submitted' %}bg-dark
+                                {% elif thesis.phase == 'defended' %}bg-success
+                                {% elif thesis.phase == 'completed' %}bg-success
+                                {% elif thesis.phase == 'abandoned' %}bg-danger
+                                {% endif %}">
+                                {{ thesis.get_phase_display }}
+                            </span>
+                        </td>
+                        <td>{{ thesis.date_first_contact|default:"-" }}</td>
+                        <td>{{ thesis.date_registration|default:"-" }}</td>
+                        <td>{{ thesis.date_deadline|default:"-" }}</td>
+                        <td>{{ thesis.date_presentation|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'thesis_update' thesis.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">No theses found. <a href="{% url 'thesis_create' %}">Create one?</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-3">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3 text-muted">
+    <small>Total: {{ page_obj.paginator.count }} theses</small>
+</div>
+{% endblock %}
