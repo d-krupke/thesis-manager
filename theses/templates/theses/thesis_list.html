@@ -29,7 +29,7 @@
                 <tbody>
                     {% for stat in supervisor_stats %}
                     <tr>
-                        <td><strong>{{ stat.supervisor }}</strong></td>
+                        <td><strong><a href="{% url 'supervisor_detail' stat.supervisor.pk %}">{{ stat.supervisor }}</a></strong></td>
                         {% for phase_key, phase_label in phases %}
                             <td class="text-center">
                                 {% for pl, count in stat.phases.items %}
@@ -121,7 +121,7 @@
                         </td>
                         <td>
                             {% for supervisor in thesis.supervisors.all %}
-                                {{ supervisor }}{% if not forloop.last %}, {% endif %}
+                                <a href="{% url 'supervisor_detail' supervisor.pk %}">{{ supervisor }}</a>{% if not forloop.last %}, {% endif %}
                             {% empty %}
                                 <span class="text-muted">-</span>
                             {% endfor %}

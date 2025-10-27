@@ -59,7 +59,7 @@
                                 </td>
                                 <td>
                                     {% for supervisor in thesis.supervisors.all %}
-                                        {{ supervisor }}{% if not forloop.last %}, {% endif %}
+                                        <a href="{% url 'supervisor_detail' supervisor.pk %}">{{ supervisor }}</a>{% if not forloop.last %}, {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>{{ thesis.date_registration|default:"-" }}</td>
