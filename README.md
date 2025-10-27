@@ -2,6 +2,14 @@
 
 A Django-based web application for managing student theses at academic institutes. Track theses from first contact through completion, including all important dates, student and supervisor information, and repository links.
 
+## Quick Links
+
+- **[Installation & Setup](#installation--setup)** - Get started quickly
+- **[API Documentation](API.md)** - REST API usage guide
+- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment with nginx
+- **[Email Setup](EMAIL_SETUP_GUIDE.md)** - Configure email notifications
+- **[Troubleshooting](#troubleshooting)** - Common issues and solutions
+
 ## Features
 
 - **Thesis Tracking**: Manage theses through multiple phases (first contact, topic discussion, literature research, registration, working, defense, review, completion)
@@ -33,10 +41,13 @@ A Django-based web application for managing student theses at academic institute
 ## Technology Stack
 
 - **Backend**: Django 5.0+
+- **API**: Django REST Framework 3.14+
+- **Authentication**: Django REST Knox (token-based API auth)
 - **Database**: PostgreSQL 16
 - **Container**: Docker & Docker Compose
 - **Web Server**: Nginx (reverse proxy) + Gunicorn (WSGI server)
 - **Frontend**: Bootstrap 5.3
+- **API Documentation**: drf-spectacular (OpenAPI/Swagger)
 
 ## Prerequisites
 
@@ -67,12 +78,14 @@ A Django-based web application for managing student theses at academic institute
    ```
 
    This will:
-   - Build the Django application container
+   - Build the Django application container with all dependencies
    - Start PostgreSQL database
    - Start Nginx web server
-   - Run database migrations
+   - Run database migrations (including Knox token tables)
    - Collect static files
    - Start Gunicorn WSGI server
+
+   **Note**: The `--build` flag is important for the first run to install all dependencies including the API packages (Django REST Framework, Knox, drf-spectacular, etc.).
 
 4. **Create a superuser** (in a new terminal):
    ```bash
@@ -84,6 +97,8 @@ A Django-based web application for managing student theses at academic institute
 5. **Access the application**:
    - Main interface: http://localhost
    - Django admin: http://localhost/admin
+   - API documentation: http://localhost/api/docs/
+   - API endpoints: http://localhost/api/
 
 ## Configuration
 
@@ -292,6 +307,16 @@ For detailed API documentation, examples, and best practices, see **[API.md](API
 docker-compose up
 ```
 
+### Start in detached mode (background)
+```bash
+docker-compose up -d
+```
+
+### Rebuild and start (after dependency changes)
+```bash
+docker-compose up --build
+```
+
 ### Stop the application
 ```bash
 docker-compose down
@@ -299,16 +324,22 @@ docker-compose down
 
 ### View logs
 ```bash
+# All services
+docker-compose logs -f
+
+# Specific service
 docker-compose logs -f web
+docker-compose logs -f db
+docker-compose logs -f nginx
 ```
 
 ### Run Django management commands
 ```bash
 docker-compose exec web python manage.py <command>
-```
 
-### Access Django shell
-```bash
+# Examples:
+docker-compose exec web python manage.py createsuperuser
+docker-compose exec web python manage.py migrate
 docker-compose exec web python manage.py shell
 ```
 
@@ -318,14 +349,30 @@ docker-compose exec web python manage.py makemigrations
 docker-compose exec web python manage.py migrate
 ```
 
+### Collect static files
+```bash
+docker-compose exec web python manage.py collectstatic --noinput
+```
+
+### Access Django shell
+```bash
+docker-compose exec web python manage.py shell
+```
+
 ### Backup database
 ```bash
-docker-compose exec db pg_dump -U thesis_user thesis_manager > backup.sql
+docker-compose exec db pg_dump -U thesis_user thesis_manager > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restore database
 ```bash
 docker-compose exec -T db psql -U thesis_user thesis_manager < backup.sql
+```
+
+### Reset everything (careful - deletes all data!)
+```bash
+docker-compose down -v  # -v removes volumes (database data)
+docker-compose up --build
 ```
 
 ## Production Deployment
@@ -369,14 +416,17 @@ The deployment guide covers:
 
 ### Models
 
-- **Student**: first_name, last_name, email, student_id, comments
-- **Supervisor**: first_name, last_name, email, comments
-- **Thesis**: title, thesis_type, phase, dates (7 different date fields), git_repository, comments, many-to-many relations with Student and Supervisor
+- **Student**: first_name, last_name, email, student_id, comments, created_at, updated_at
+- **Supervisor**: first_name, last_name, email, comments, created_at, updated_at
+- **Thesis**: title, thesis_type, phase, dates (7 different date fields), git_repository, description, created_at, updated_at, many-to-many relations with Student and Supervisor
+- **Comment**: thesis (ForeignKey), user (ForeignKey), text, is_auto_generated, created_at, updated_at
 
 ### Relationships
 
 - Thesis ↔ Student: Many-to-Many (rare cases of multiple students per thesis)
 - Thesis ↔ Supervisor: Many-to-Many (backup supervisors)
+- Thesis → Comment: One-to-Many (each thesis can have multiple comments)
+- User → Comment: One-to-Many (each user can make multiple comments)
 
 ## Development
 
@@ -384,30 +434,111 @@ The deployment guide covers:
 
 ```
 thesis-manager/
-├── docker-compose.yml      # Docker services configuration
-├── Dockerfile              # Django container image
-├── requirements.txt        # Python dependencies
-├── manage.py              # Django management script
-├── thesis_manager/        # Django project settings
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-└── theses/               # Main Django app
-    ├── models.py         # Data models
-    ├── views.py          # View logic
-    ├── forms.py          # Form definitions
-    ├── urls.py           # URL routing
-    ├── admin.py          # Django admin configuration
-    └── templates/        # HTML templates
-        ├── base.html
-        └── theses/
+├── docker-compose.yml          # Docker services configuration
+├── Dockerfile                  # Django container image
+├── nginx.conf                  # Nginx configuration
+├── requirements.txt            # Python dependencies
+├── .env.example                # Environment variables template
+├── manage.py                   # Django management script
+├── README.md                   # This file
+├── API.md                      # API documentation
+├── DEPLOYMENT.md               # Production deployment guide
+├── EMAIL_SETUP_GUIDE.md        # Email configuration guide
+├── CHANGELOG.md                # Version history
+│
+├── thesis_manager/             # Django project settings
+│   ├── settings.py             # Main settings (DB, API, Knox, etc.)
+│   ├── urls.py                 # Root URL configuration
+│   ├── wsgi.py                 # WSGI application
+│   └── asgi.py                 # ASGI application
+│
+└── theses/                     # Main Django app
+    ├── models.py               # Data models (Student, Supervisor, Thesis, Comment)
+    ├── views.py                # Web views and API token management
+    ├── forms.py                # Form definitions
+    ├── urls.py                 # App URL routing
+    ├── admin.py                # Django admin configuration
+    ├── signals.py              # Signal handlers for auto-comments and emails
+    │
+    ├── api/                    # REST API package
+    │   ├── __init__.py
+    │   ├── serializers.py      # API serializers for all models
+    │   ├── viewsets.py         # API viewsets with filtering
+    │   ├── permissions.py      # Custom API permissions
+    │   └── urls.py             # API URL routing
+    │
+    ├── migrations/             # Database migrations
+    │   ├── 0001_initial.py
+    │   └── 0002_remove_thesis_comments_thesis_description_comment.py
+    │
+    └── templates/              # HTML templates
+        ├── base.html           # Base template with navigation
+        ├── registration/       # Authentication templates
+        │   ├── login.html
+        │   ├── password_*.html
+        │   └── ...
+        ├── emails/             # Email templates
+        │   └── comment_notification.txt
+        └── theses/             # App-specific templates
             ├── thesis_list.html
             ├── thesis_detail.html
             ├── thesis_form.html
+            ├── student_list.html
             ├── student_detail.html
             ├── student_form.html
-            └── supervisor_form.html
+            ├── supervisor_list.html
+            ├── supervisor_detail.html
+            ├── supervisor_form.html
+            ├── api_tokens.html
+            └── comment_edit.html
 ```
+
+### Python Dependencies
+
+The application uses the following key dependencies (see `requirements.txt`):
+
+#### Core Framework
+- **Django (>=5.0,<5.1)**: Web framework providing ORM, admin interface, authentication, and more
+- **psycopg2-binary (>=2.9.9)**: PostgreSQL database adapter for Python
+- **gunicorn (>=21.2.0)**: Production WSGI server for running Django
+
+#### REST API
+- **djangorestframework (>=3.14.0)**: Toolkit for building RESTful APIs in Django
+  - Provides serializers, viewsets, authentication, and API browsing
+- **django-rest-knox (>=4.2.0)**: Token-based authentication for Django REST Framework
+  - Allows users to create multiple API tokens
+  - More secure than DRF's built-in token auth (uses SHA512 hashing)
+  - Supports token expiry and per-user token limits
+- **drf-spectacular (>=0.27.0)**: OpenAPI 3.0 schema generation for Django REST Framework
+  - Auto-generates API documentation from code
+  - Provides Swagger UI and ReDoc interfaces
+  - Makes API testing and exploration easier
+- **django-filter (>=23.5)**: Reusable Django app for filtering querysets
+  - Enables filtering API endpoints by multiple fields
+  - Used for phase, type, student, and supervisor filtering
+- **cryptography (>=41.0.0)**: Cryptographic recipes and primitives
+  - Required by django-rest-knox for secure token hashing
+  - Provides SHA512 and other hashing algorithms
+
+#### Why These Dependencies?
+
+1. **Django REST Framework**: Industry standard for building APIs in Django. Well-maintained, extensively documented, and feature-rich.
+
+2. **Knox**: Chosen over DRF's built-in token auth because it:
+   - Supports multiple tokens per user (different apps/devices)
+   - Uses more secure hashing (SHA512 vs SHA1)
+   - Allows setting token expiry
+   - Enables token rotation without password changes
+
+3. **drf-spectacular**: Best-in-class OpenAPI documentation generator for DRF:
+   - More actively maintained than alternatives
+   - Better OpenAPI 3.0 support
+   - Cleaner, more modern Swagger UI
+
+4. **django-filter**: Simplifies adding filtering to API endpoints:
+   - Reduces boilerplate code
+   - Provides consistent filtering interface
+   - Well-integrated with DRF
 
 ### Adding New Features
 
@@ -418,12 +549,18 @@ thesis-manager/
    docker-compose exec web python manage.py migrate
    ```
 3. Update forms, views, and templates as needed
+4. For API changes:
+   - Update serializers in `theses/api/serializers.py`
+   - Update viewsets in `theses/api/viewsets.py`
+   - API documentation auto-updates via drf-spectacular
 
 ## Troubleshooting
 
-### Port 8000 already in use
+### Port 80 already in use
 ```bash
-# Stop other services using port 8000 or change the port in docker-compose.yml
+# Check what's using port 80
+sudo lsof -i :80
+# Stop other services or change the port in docker-compose.yml
 docker-compose down
 docker ps -a  # Check for other containers
 ```
@@ -433,13 +570,49 @@ docker ps -a  # Check for other containers
 # Ensure PostgreSQL is healthy
 docker-compose ps
 docker-compose logs db
+
+# Check database environment variables in .env
+cat .env | grep POSTGRES
 ```
 
 ### Static files not loading
 ```bash
 # Collect static files
 docker-compose exec web python manage.py collectstatic --noinput
+
+# Check nginx is serving static files
+docker-compose logs nginx
 ```
+
+### API returns 401 Unauthorized
+- Ensure you're including the `Authorization: Token YOUR_TOKEN` header
+- Check if token is valid: Go to API → My API Tokens in the web interface
+- Create a new token if needed
+
+### API documentation not loading
+```bash
+# Ensure drf-spectacular is installed
+docker-compose exec web python manage.py shell -c "import drf_spectacular"
+
+# Check logs for errors
+docker-compose logs web
+
+# Rebuild if needed
+docker-compose up --build
+```
+
+### Migrations fail with "no module named cryptography"
+```bash
+# Rebuild the Docker image to install new dependencies
+docker-compose down
+docker-compose up --build
+```
+
+### Email notifications not working
+- Check email settings in `.env`
+- Verify SMTP credentials are correct
+- Check logs: `docker-compose logs web | grep -i email`
+- Test with console backend first: `EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend`
 
 ## License
 
