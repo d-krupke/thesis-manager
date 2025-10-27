@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Thesis Manager{% endblock %}</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         .table-sm td, .table-sm th {
             padding: 0.3rem;
@@ -19,6 +20,83 @@
             top: 0;
             background-color: white;
             z-index: 10;
+        }
+
+        /* Warning Styles */
+        .warning-item {
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .warning-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .warning-item.warning-urgent {
+            border-left: 4px solid #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .warning-item.warning-urgent:hover {
+            background-color: #ffe5e5;
+        }
+
+        .warning-item.warning-warning {
+            border-left: 4px solid #ffc107;
+            background-color: #fffbf0;
+        }
+
+        .warning-item.warning-warning:hover {
+            background-color: #fff3cd;
+        }
+
+        .warning-item.warning-info {
+            border-left: 4px solid #0dcaf0;
+            background-color: #f0fbff;
+        }
+
+        .warning-item.warning-info:hover {
+            background-color: #cff4fc;
+        }
+
+        .warning-item h6 {
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .warning-item p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .warning-item .bi {
+            margin-right: 0.3rem;
+        }
+
+        /* Formal Document Styles */
+        .formal-document {
+            background-color: #f8f9fa;
+            border-left: 3px solid #0d6efd;
+            padding: 1.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .formal-document p {
+            margin-bottom: 1rem;
+        }
+
+        /* Collapsible toggle button icon animation */
+        button[data-bs-toggle="collapse"] .bi-chevron-down {
+            transition: transform 0.2s ease;
+        }
+
+        button[data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down {
+            transform: rotate(180deg);
         }
     </style>
 </head>

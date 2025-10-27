@@ -75,6 +75,7 @@ from django.contrib import messages
 from knox.models import AuthToken
 from .models import Thesis, Student, Supervisor, Comment
 from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm
+from .warnings import get_all_thesis_warnings
 
 
 class ThesisListView(LoginRequiredMixin, ListView):
@@ -204,7 +205,13 @@ class ThesisListView(LoginRequiredMixin, ListView):
                 supervisor_stats.append(stats)
 
         context['supervisor_stats'] = supervisor_stats
-        # Now 'supervisor_stats' is available in the template
+
+        # Generate warnings for all theses
+        # This checks all active theses for conditions that need attention
+        # (deadlines, review times, missing data, etc.)
+        context['thesis_warnings'] = get_all_thesis_warnings()
+
+        # Now 'supervisor_stats' and 'thesis_warnings' are available in the template
         return context
 
 

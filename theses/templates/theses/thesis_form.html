@@ -149,6 +149,31 @@
                     {% endif %}
                     <small class="form-text text-muted">{{ form.description.help_text }}</small>
                 </div>
+
+                <hr class="my-4">
+                <h5 class="mb-3">Formal Documents</h5>
+
+                <div class="mb-3">
+                    <label for="{{ form.task_description.id_for_label }}" class="form-label">
+                        <i class="bi bi-file-text"></i> {{ form.task_description.label }}
+                    </label>
+                    {{ form.task_description }}
+                    {% if form.task_description.errors %}
+                    <div class="text-danger"><small>{{ form.task_description.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.task_description.help_text }}</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.review.id_for_label }}" class="form-label">
+                        <i class="bi bi-file-earmark-check"></i> {{ form.review.label }}
+                    </label>
+                    {{ form.review }}
+                    {% if form.review.errors %}
+                    <div class="text-danger"><small>{{ form.review.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.review.help_text }}</small>
+                </div>
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary">Save</button>

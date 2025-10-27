@@ -199,6 +199,8 @@ class Thesis(models.Model):
     # Additional information
     git_repository = models.URLField(blank=True, help_text="URL to student's git repository")
     description = models.TextField(blank=True, help_text="General description of the thesis")
+    task_description = models.TextField(blank=True, help_text="Formal multi-paragraph task description defining scope and objectives")
+    review = models.TextField(blank=True, help_text="Formal multi-paragraph review of the completed thesis")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

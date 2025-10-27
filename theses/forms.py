@@ -91,7 +91,7 @@ class ThesisForm(forms.ModelForm):
             'students', 'supervisors',
             'date_first_contact', 'date_topic_selected', 'date_registration',
             'date_deadline', 'date_presentation', 'date_review', 'date_final_discussion',
-            'git_repository', 'description'
+            'git_repository', 'description', 'task_description', 'review'
         ]
         # Widgets customize the HTML input elements
         # attrs={'class': 'form-control'}: Adds Bootstrap CSS classes for styling
@@ -113,6 +113,9 @@ class ThesisForm(forms.ModelForm):
             'git_repository': forms.URLInput(attrs={'class': 'form-control'}),
             # rows=5: Make the textarea 5 rows tall
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            # Larger textareas for multi-paragraph formal documents
+            'task_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Formal task description...'}),
+            'review': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Formal thesis review...'}),
         }
 
 

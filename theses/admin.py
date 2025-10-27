@@ -165,7 +165,7 @@ class ThesisAdmin(admin.ModelAdmin):
                       'date_deadline', 'date_presentation', 'date_review', 'date_final_discussion')
         }),
         ('Additional Information', {
-            'fields': ('git_repository', 'description')
+            'fields': ('git_repository', 'description', 'task_description', 'review')
         }),
     )
 
