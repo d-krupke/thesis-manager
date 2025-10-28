@@ -104,23 +104,9 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
     thesis_title = thesis.title or f"{thesis.get_thesis_type_display()} (No title)"
 
     # ========================================================================
-    # CHECK 1: Deadline exceeded
-    # ========================================================================
-    if thesis.date_deadline and today > thesis.date_deadline:
-        # Thesis is past its deadline
-        days_overdue = (today - thesis.date_deadline).days
-        warnings.append(ThesisWarning(
-            thesis_id=thesis.id,
-            student_name=student_name,
-            thesis_title=thesis_title,
-            message=f"Deadline exceeded by {days_overdue} day{'s' if days_overdue != 1 else ''}",
-            urgency=WarningUrgency.URGENT
-        ))
-
-    # ========================================================================
     # CHECK 2: Deadline approaching (within 7 days)
     # ========================================================================
-    elif thesis.date_deadline and thesis.phase not in ['submitted', 'defended', 'reviewed', 'completed']:
+    if thesis.date_deadline and thesis.phase not in ['submitted', 'defended', 'reviewed', 'completed']:
         # Only warn if not yet submitted
         days_until_deadline = (thesis.date_deadline - today).days
         if 0 < days_until_deadline <= 7:
@@ -161,15 +147,16 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
     # ========================================================================
     # CHECK 4: Presentation date overdue
     # ========================================================================
-    if thesis.date_presentation and today > thesis.date_presentation and thesis.phase not in ['defended', 'reviewed', 'completed']:
-        days_overdue = (today - thesis.date_presentation).days
-        warnings.append(ThesisWarning(
-            thesis_id=thesis.id,
-            student_name=student_name,
-            thesis_title=thesis_title,
-            message=f"Presentation date passed {days_overdue} day{'s' if days_overdue != 1 else ''} ago",
-            urgency=WarningUrgency.WARNING
-        ))
+    if thesis.date_deadline and thesis.date_presentation:
+        days_until_deadline = (thesis.date_deadline - today).days
+        if days_until_deadline <= 7 and thesis.phase not in ['defended', 'reviewed', 'completed']:
+            warnings.append(ThesisWarning(
+                thesis_id=thesis.id,
+                student_name=student_name,
+                thesis_title=thesis_title,
+                message="Deadline within 7 days but no presentation date set",
+                urgency=WarningUrgency.WARNING
+            ))
 
     # ========================================================================
     # CHECK 5: Registered but no deadline set
