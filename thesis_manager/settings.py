@@ -137,11 +137,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
+# For subpath deployment (e.g., /theses/), set FORCE_SCRIPT_NAME in .env
+# Example: FORCE_SCRIPT_NAME=/theses
+FORCE_SCRIPT_NAME = os.environ.get('FORCE_SCRIPT_NAME', None)
+
+STATIC_URL = os.environ.get('STATIC_URL', '/static/')
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploads)
-MEDIA_URL = '/media/'
+MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
@@ -167,6 +171,35 @@ SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
 # Email notifications enabled (only if proper email backend is configured)
 EMAIL_NOTIFICATIONS_ENABLED = EMAIL_HOST and EMAIL_HOST_USER
+
+# Security settings for production
+# Enable these in .env.prod for production deployments
+# See: https://docs.djangoproject.com/en/5.2/ref/settings/#security
+
+# Redirect all HTTP requests to HTTPS (enable in production behind SSL/TLS)
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False') == 'True'
+
+# Only send session cookie over HTTPS (enable in production)
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
+
+# Only send CSRF cookie over HTTPS (enable in production)
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'
+
+# Browser XSS filter (enable in production)
+SECURE_BROWSER_XSS_FILTER = os.environ.get('SECURE_BROWSER_XSS_FILTER', 'False') == 'True'
+
+# Don't allow browsers to guess content types (enable in production)
+SECURE_CONTENT_TYPE_NOSNIFF = os.environ.get('SECURE_CONTENT_TYPE_NOSNIFF', 'False') == 'True'
+
+# Prevent site from being displayed in frames (clickjacking protection)
+X_FRAME_OPTIONS = os.environ.get('X_FRAME_OPTIONS', 'SAMEORIGIN')
+
+# HTTP Strict Transport Security (HSTS)
+# Only enable after testing HTTPS works correctly!
+# This tells browsers to only access the site via HTTPS for the specified time
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True'
+SECURE_HSTS_PRELOAD = os.environ.get('SECURE_HSTS_PRELOAD', 'False') == 'True'
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
