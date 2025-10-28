@@ -9,6 +9,7 @@ A Django-based web application for managing student theses at academic institute
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment with nginx
 - **[Email Setup](EMAIL_SETUP_GUIDE.md)** - Configure email notifications
 - **[Troubleshooting](#troubleshooting)** - Common issues and solutions
+- **[License](#license)** - MIT License
 
 ## Features
 
@@ -613,8 +614,25 @@ docker-compose up --build
 
 ## License
 
-This project is created for academic thesis management. Modify and use as needed for your institution.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## Support
+### Third-Party Licenses
 
-For issues or questions, please check the Django documentation at https://docs.djangoproject.com/
+This project uses the following open-source dependencies:
+
+**Python Dependencies:**
+- [Django](https://www.djangoproject.com/) - BSD-3-Clause License
+- [Django REST Framework](https://www.django-rest-framework.org/) - BSD-3-Clause License
+- [Django REST Knox](https://github.com/jazzband/django-rest-knox) - MIT License
+- [drf-spectacular](https://github.com/tfranzel/drf-spectacular) - BSD-3-Clause License
+- [django-filter](https://github.com/carltongibson/django-filter) - BSD-3-Clause License
+- [Gunicorn](https://gunicorn.org/) - MIT License
+- [psycopg2](https://www.psycopg.org/) - LGPL-3.0 with linking exceptions
+
+**Frontend Libraries:**
+- [Bootstrap 5](https://getbootstrap.com/) - MIT License
+- [jQuery](https://jquery.com/) - MIT License
+- [Select2](https://select2.org/) - MIT License
+- [Bootstrap Icons](https://icons.getbootstrap.com/) - MIT License
+
+All dependencies use permissive licenses compatible with the MIT License.

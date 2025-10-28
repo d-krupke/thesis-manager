@@ -73,6 +73,19 @@ class ThesisForm(forms.ModelForm):
     - Validates data according to model constraints
     - Saves data to database with form.save()
     """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Override __init__ to make students and supervisors fields optional.
+
+        By default, ManyToMany fields are required in forms.
+        We allow creating theses without students/supervisors initially,
+        with a warning system to remind users to add them.
+        """
+        super().__init__(*args, **kwargs)
+        self.fields['students'].required = False
+        self.fields['supervisors'].required = False
+
     class Meta:
         """
         Meta class configures the ModelForm.

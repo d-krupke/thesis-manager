@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{% if form.instance.pk %}Edit Thesis{% else %}New Thesis{% endif %} - Thesis Manager{% endblock %}
 
 {% block content %}
+<link href="{% static 'css/select2.min.css' %}" rel="stylesheet" />
+<link href="{% static 'css/select2-bootstrap-5-theme.min.css' %}" rel="stylesheet" />
 <div class="row">
     <div class="col-lg-10 offset-lg-1">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -46,23 +49,23 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="{{ form.students.id_for_label }}" class="form-label">{{ form.students.label }}</label>
+                        <label for="{{ form.students.id_for_label }}" class="form-label">{{ form.students.label }} <span class="text-muted">(optional)</span></label>
                         {{ form.students }}
                         {% if form.students.errors %}
                         <div class="text-danger"><small>{{ form.students.errors }}</small></div>
                         {% endif %}
-                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        <small class="form-text text-muted">Type to search and select students. Can be added later.</small>
                         <div class="mt-1">
                             <a href="{% url 'student_create' %}" class="btn btn-sm btn-outline-secondary" target="_blank">+ New Student</a>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="{{ form.supervisors.id_for_label }}" class="form-label">{{ form.supervisors.label }}</label>
+                        <label for="{{ form.supervisors.id_for_label }}" class="form-label">{{ form.supervisors.label }} <span class="text-muted">(optional)</span></label>
                         {{ form.supervisors }}
                         {% if form.supervisors.errors %}
                         <div class="text-danger"><small>{{ form.supervisors.errors }}</small></div>
                         {% endif %}
-                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple</small>
+                        <small class="form-text text-muted">Type to search and select supervisors. Can be added later.</small>
                         <div class="mt-1">
                             <a href="{% url 'supervisor_create' %}" class="btn btn-sm btn-outline-secondary" target="_blank">+ New Supervisor</a>
                         </div>
@@ -182,4 +185,21 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'js/select2.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for students and supervisors fields with Bootstrap 5 theme
+    $('#{{ form.students.id_for_label }}, #{{ form.supervisors.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select or search...',
+        allowClear: true,
+        closeOnSelect: false  // Keep dropdown open when selecting multiple items
+    });
+});
+</script>
 {% endblock %}

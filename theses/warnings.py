@@ -217,7 +217,7 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
             student_name="No Student",
             thesis_title=thesis_title,
             message="No student assigned to thesis",
-            urgency=WarningUrgency.URGENT
+            urgency=WarningUrgency.WARNING  # WARNING (yellow) - student can be added later
         ))
 
     if not thesis.supervisors.exists():
@@ -226,7 +226,7 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
             student_name=student_name,
             thesis_title=thesis_title,
             message="No supervisor assigned to thesis",
-            urgency=WarningUrgency.URGENT
+            urgency=WarningUrgency.WARNING  # WARNING (yellow) - supervisor can be added later
         ))
 
     return warnings
