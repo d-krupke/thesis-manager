@@ -154,9 +154,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login settings
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+# These URLs must respect FORCE_SCRIPT_NAME for subpath deployments
+_script_name = os.environ.get('FORCE_SCRIPT_NAME', '')
+LOGIN_URL = f'{_script_name}/accounts/login/'
+LOGIN_REDIRECT_URL = f'{_script_name}/'
+LOGOUT_REDIRECT_URL = f'{_script_name}/accounts/login/'
 
 # Email settings
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')

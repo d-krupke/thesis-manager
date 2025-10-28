@@ -516,9 +516,6 @@ The application uses the following key dependencies (see `requirements.txt`):
 - **django-filter (>=23.5)**: Reusable Django app for filtering querysets
   - Enables filtering API endpoints by multiple fields
   - Used for phase, type, student, and supervisor filtering
-- **cryptography (>=41.0.0)**: Cryptographic recipes and primitives
-  - Required by django-rest-knox for secure token hashing
-  - Provides SHA512 and other hashing algorithms
 
 #### Why These Dependencies?
 
