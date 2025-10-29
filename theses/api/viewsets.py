@@ -333,13 +333,16 @@ class ThesisViewSet(viewsets.ModelViewSet):
         Add a new comment to a specific thesis.
 
         The user is automatically set from the request.
+        Accepts optional 'is_auto_generated' field to mark automated comments.
         """
         thesis = self.get_object()
         # Deserialize the incoming JSON data
         serializer = CommentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             # Save with additional fields not in the request
-            serializer.save(thesis=thesis, user=request.user)
+            # Allow is_auto_generated to be set via request data (defaults to False)
+            is_auto_generated = request.data.get('is_auto_generated', False)
+            serializer.save(thesis=thesis, user=request.user, is_auto_generated=is_auto_generated)
             # Return 201 Created with the new comment data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         # Return 400 Bad Request with validation errors
