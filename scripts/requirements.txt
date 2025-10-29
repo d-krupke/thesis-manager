@@ -2,3 +2,9 @@
 python-gitlab>=4.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
+
+# AI-enhanced reporting
+pydantic-ai>=0.0.14
+pydantic>=2.0.0
+# OpenAI is required for AI features (pydantic-ai peer dependency)
+openai>=1.52.0

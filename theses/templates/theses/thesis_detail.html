@@ -132,6 +132,26 @@
                     {% endif %}
                 </div>
 
+                <hr>
+
+                <div class="mb-3">
+                    <strong>AI-Enhanced Reporting:</strong>
+                    {% if thesis.ai_summary_enabled %}
+                        <span class="badge bg-success">Enabled</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Disabled</span>
+                    {% endif %}
+                </div>
+
+                {% if thesis.ai_context %}
+                <div class="mb-3">
+                    <strong>AI Context:</strong>
+                    <div class="mt-2 p-3 bg-light rounded">
+                        <small>{{ thesis.ai_context }}</small>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="text-muted">
                     <small>
                         Created: {{ thesis.created_at|date:"Y-m-d H:i" }} |

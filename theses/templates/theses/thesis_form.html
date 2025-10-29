@@ -177,6 +177,32 @@
                     {% endif %}
                     <small class="form-text text-muted">{{ form.review.help_text }}</small>
                 </div>
+
+                <hr class="my-4">
+                <h5 class="mb-3">AI-Enhanced Reporting Settings</h5>
+                <p class="text-muted small">Configure AI-powered progress analysis for weekly reports. Disable if student does not consent to external AI processing.</p>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.ai_summary_enabled }}
+                        <label class="form-check-label" for="{{ form.ai_summary_enabled.id_for_label }}">
+                            {{ form.ai_summary_enabled.label }}
+                        </label>
+                    </div>
+                    {% if form.ai_summary_enabled.errors %}
+                    <div class="text-danger"><small>{{ form.ai_summary_enabled.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.ai_summary_enabled.help_text }}</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.ai_context.id_for_label }}" class="form-label">{{ form.ai_context.label }}</label>
+                    {{ form.ai_context }}
+                    {% if form.ai_context.errors %}
+                    <div class="text-danger"><small>{{ form.ai_context.errors }}</small></div>
+                    {% endif %}
+                    <small class="form-text text-muted">{{ form.ai_context.help_text }}</small>
+                </div>
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary">Save</button>

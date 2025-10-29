@@ -202,6 +202,20 @@ class Thesis(models.Model):
     task_description = models.TextField(blank=True, help_text="Formal multi-paragraph task description defining scope and objectives")
     review = models.TextField(blank=True, help_text="Formal multi-paragraph review of the completed thesis")
 
+    # AI-enhanced reporting settings
+    ai_summary_enabled = models.BooleanField(
+        default=True,
+        help_text="Enable AI-powered progress analysis in weekly reports. "
+                  "Disable if student does not consent to external AI processing."
+    )
+    ai_context = models.TextField(
+        blank=True,
+        max_length=500,
+        help_text="Additional context for AI analysis (max 500 chars). "
+                  "E.g., 'Pure theory thesis, no implementation expected' or "
+                  "'Focus on hardware development, code changes will be minimal'."
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

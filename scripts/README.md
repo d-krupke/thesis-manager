@@ -59,6 +59,9 @@ GITLAB_TOKEN=your-gitlab-token-here
 # Thesis Manager Configuration
 THESIS_MANAGER_URL=https://your-thesis-manager.com/
 THESIS_MANAGER_API_TOKEN=your-knox-token-here
+
+# OpenAI Configuration (optional - for AI-enhanced reporting)
+OPENAI_API_KEY=sk-...
 ```
 
 ### 3. GitLab Token Requirements
@@ -84,7 +87,50 @@ python gitlab_reporter.py --dry-run
 
 # Custom time period (default: 7 days)
 python gitlab_reporter.py --days 14
+
+# Enable AI-powered progress analysis
+python gitlab_reporter.py --ai
+
+# AI with specific model (default: gpt-4o-mini)
+python gitlab_reporter.py --ai --ai-model gpt-4o
 ```
+
+### AI-Enhanced Reporting
+
+When the `--ai` flag is enabled, the script uses ChatGPT to analyze commit activity and provide intelligent insights:
+
+**AI Analysis Includes:**
+- **Summary**: Concise 3-sentence summary of progress
+- **Code Progress Score**: 0-10 rating of implementation progress
+- **Thesis Progress Score**: 0-10 rating of thesis writing progress (LaTeX files)
+- **Attention Flag**: Alerts when progress is concerning
+- **Reasoning**: Brief explanation of scores
+
+**Example AI-Enhanced Report:**
+```markdown
+## Weekly Repository Activity Report
+
+### 🤖 AI Progress Analysis
+
+⚠️ **Attention Required**
+
+The student made minimal progress this week with only 2 commits
+focused on documentation. No substantive code changes were detected.
+With the deadline in 45 days, more consistent implementation work
+is needed.
+
+**Progress Scores:**
+- Implementation: **3/10** 🔴
+- Thesis Writing: **5/10** 🟠
+
+*Low code activity and approaching deadline warrant supervisor attention.*
+```
+
+**Configuration:**
+- Requires `OPENAI_API_KEY` in `.env`
+- Uses `gpt-4o-mini` by default (cost-efficient)
+- Can specify model with `--ai-model` flag
+- Gracefully falls back to basic reporting if API unavailable
 
 ### Scheduled Execution
 

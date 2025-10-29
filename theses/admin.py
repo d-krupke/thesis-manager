@@ -167,6 +167,11 @@ class ThesisAdmin(admin.ModelAdmin):
         ('Additional Information', {
             'fields': ('git_repository', 'description', 'task_description', 'review')
         }),
+        ('AI-Enhanced Reporting Settings', {
+            'fields': ('ai_summary_enabled', 'ai_context'),
+            'description': 'Configure AI-powered progress analysis for weekly reports. '
+                          'Disable if student does not consent to external AI processing.'
+        }),
     )
 
     def title_or_placeholder(self, obj):

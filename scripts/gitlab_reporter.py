@@ -39,7 +39,7 @@ from typing import Dict, Any
 import dotenv
 
 # Import utility modules
-from utils import GitLabClient, ThesisManagerClient, ReportGenerator
+from utils import GitLabClient, ThesisManagerClient, ReportGenerator, AIReportGenerator
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
@@ -144,6 +144,12 @@ Examples:
   # Custom time period
   python gitlab_reporter.py --days 14
 
+  # Enable AI-powered analysis
+  python gitlab_reporter.py --ai
+
+  # AI with specific model
+  python gitlab_reporter.py --ai --ai-model gpt-4o
+
   # Verbose output
   python gitlab_reporter.py --verbose
         """
@@ -170,6 +176,16 @@ Examples:
         action='store_true',
         help='Enable verbose debug logging'
     )
+    parser.add_argument(
+        '--ai',
+        action='store_true',
+        help='Enable AI-powered progress analysis (requires OPENAI_API_KEY)'
+    )
+    parser.add_argument(
+        '--ai-model',
+        default='gpt-4o-mini',
+        help='OpenAI model to use for AI analysis (default: gpt-4o-mini)'
+    )
 
     args = parser.parse_args()
 
@@ -180,13 +196,22 @@ Examples:
         logger.debug("Verbose logging enabled")
 
     logger.info("GitLab Weekly Reporter starting...")
-    logger.info("Configuration: lookback=%d days, dry_run=%s", args.days, args.dry_run)
+    logger.info("Configuration: lookback=%d days, dry_run=%s, ai=%s",
+               args.days, args.dry_run, args.ai)
 
     # Initialize clients
     try:
         gitlab_client = GitLabClient()
         tm_client = ThesisManagerClient()
-        report_gen = ReportGenerator()
+
+        # Choose report generator based on --ai flag
+        if args.ai:
+            logger.info("AI-enhanced reporting enabled with model: %s", args.ai_model)
+            report_gen = AIReportGenerator(model=args.ai_model)
+        else:
+            logger.info("Using basic report generator")
+            report_gen = ReportGenerator()
+
     except ValueError as e:
         logger.error("Configuration error: %s", e)
         logger.error("Please ensure the following environment variables are set:")

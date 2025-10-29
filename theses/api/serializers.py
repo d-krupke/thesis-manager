@@ -191,7 +191,9 @@ class ThesisSerializer(serializers.ModelSerializer):
             'supervisors', 'supervisors_details',
             'date_first_contact', 'date_topic_selected', 'date_registration',
             'date_deadline', 'date_presentation', 'date_review', 'date_final_discussion',
-            'git_repository', 'description', 'task_description', 'review', 'comments',
+            'git_repository', 'description', 'task_description', 'review',
+            'ai_summary_enabled', 'ai_context',
+            'comments',
             'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'created_at', 'updated_at')
@@ -239,6 +241,7 @@ class ThesisCreateUpdateSerializer(serializers.ModelSerializer):
             'date_first_contact', 'date_topic_selected', 'date_registration',
             'date_deadline', 'date_presentation', 'date_review', 'date_final_discussion',
             'git_repository', 'description', 'task_description', 'review',
+            'ai_summary_enabled', 'ai_context',
             'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'created_at', 'updated_at')
