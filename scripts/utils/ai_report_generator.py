@@ -133,7 +133,7 @@ class AIReportGenerator(ReportGenerator):
         """Build the system prompt for the AI agent."""
         return """**Role:**  
 You are an **experienced thesis supervisor** analyzing student progress on behalf of a professor.  
-Your task is to provide an **objective, data-driven, and context-aware evaluation** of a student’s thesis progress based on their Git activity.
+Your task is to provide an **objective, data-driven, and context-aware evaluation** of a student's thesis progress based on their Git activity.
 
 ---
 
@@ -178,21 +178,21 @@ Your analysis should infer **what kind of work** was done (e.g., algorithmic cor
 
 ### Quantitative Scoring
 
-**Code Progress Score (0–10):**  
+**Code Progress Score (0-10):**  
 Reflects depth and relevance of implementation work.
-- 0–2 → No meaningful code changes  
-- 3–4 → Minor or peripheral edits  
-- 5–6 → Moderate implementation or infrastructure progress  
-- 7–8 → Substantial development or well-structured experiment setup  
-- 9–10 → Major system components or mature, ready-to-evaluate implementation  
+- 0-2 → No meaningful code changes  
+- 3-4 → Minor or peripheral edits  
+- 5-6 → Moderate implementation or infrastructure progress  
+- 7-8 → Substantial development or well-structured experiment setup  
+- 9-10 → Major system components or mature, ready-to-evaluate implementation  
 
-**Thesis Progress Score (0–10):**  
+**Thesis Progress Score (0-10):**  
 Based solely on `.tex` and `.bib` files.  
-- 0–2 → No thesis writing detected  
-- 3–4 → Minimal writing activity  
-- 5–6 → Some writing progress  
-- 7–8 → Consistent and meaningful writing progress  
-- 9–10 → Substantial or near-complete writing  
+- 0-2 → No thesis writing detected  
+- 3-4 → Minimal writing activity  
+- 5-6 → Some writing progress  
+- 7-8 → Consistent and meaningful writing progress  
+- 9-10 → Substantial or near-complete writing  
 
 ---
 
