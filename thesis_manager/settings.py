@@ -174,6 +174,12 @@ SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 # Email notifications enabled (only if proper email backend is configured)
 EMAIL_NOTIFICATIONS_ENABLED = EMAIL_HOST and EMAIL_HOST_USER
 
+# Supervisor workload thresholds
+# These define when a supervisor's workload is considered low/medium/high
+# Workload is based on the number of active (non-completed/non-abandoned) theses
+WORKLOAD_LOW_THRESHOLD = int(os.environ.get('WORKLOAD_LOW_THRESHOLD', '3'))
+WORKLOAD_MEDIUM_THRESHOLD = int(os.environ.get('WORKLOAD_MEDIUM_THRESHOLD', '5'))
+
 # Security settings for production
 # Enable these in .env.prod for production deployments
 # See: https://docs.djangoproject.com/en/5.2/ref/settings/#security

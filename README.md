@@ -57,6 +57,51 @@ A Django-based web application for managing student theses at academic institute
 
 ## Installation & Setup
 
+### Quick Setup (Recommended)
+
+For easy setup, use the provided setup script:
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd thesis-manager
+   ```
+
+2. **Run the setup script**:
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+   The script will automatically:
+   - Create `.env` file from `.env.example`
+   - Build Docker containers
+   - Start all services (PostgreSQL, Django, Nginx)
+   - Run database migrations
+   - Collect static files
+
+3. **Create a superuser account**:
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+4. **Access the application**:
+   - Main interface: http://localhost
+   - Django admin: http://localhost/admin
+   - API documentation: http://localhost/api/docs/
+
+**Important**: After setup, review and update your `.env` file with secure values:
+- Change `SECRET_KEY` to a random string (especially for production)
+- Update `POSTGRES_PASSWORD` from the default
+- Configure email settings if needed (see [Email Setup Guide](EMAIL_SETUP_GUIDE.md))
+
+### Manual Setup (Advanced)
+
+<details>
+<summary>Click to expand manual setup instructions</summary>
+
+If you prefer to set up manually or need more control:
+
 1. **Clone the repository**:
    ```bash
    cd /path/to/thesis-manager
@@ -66,7 +111,7 @@ A Django-based web application for managing student theses at academic institute
    ```bash
    cp .env.example .env
    ```
-   
+
    Edit `.env` and update the values as needed:
    - `SECRET_KEY` - Generate a secure key for production
    - `DEBUG` - Set to `0` for production
@@ -100,6 +145,8 @@ A Django-based web application for managing student theses at academic institute
    - Django admin: http://localhost/admin
    - API documentation: http://localhost/api/docs/
    - API endpoints: http://localhost/api/
+
+</details>
 
 ## Configuration
 

@@ -20,6 +20,7 @@
                 <thead>
                     <tr>
                         <th>Supervisor</th>
+                        <th class="text-center"><strong>Active</strong></th>
                         {% for phase_key, phase_label in phases %}
                             <th class="text-center">{{ phase_label }}</th>
                         {% endfor %}
@@ -30,6 +31,9 @@
                     {% for stat in supervisor_stats %}
                     <tr>
                         <td><strong><a href="{% url 'supervisor_detail' stat.supervisor.pk %}">{{ stat.supervisor }}</a></strong></td>
+                        <td class="text-center workload-cell" data-workload="{{ stat.active }}" data-max="{{ workload_max }}">
+                            <strong class="workload-badge">{{ stat.active }}</strong>
+                        </td>
                         {% for phase_key, phase_label in phases %}
                             <td class="text-center">
                                 {% for pl, count in stat.phases.items %}
@@ -322,6 +326,54 @@
         // Handle individual checkbox clicks
         phaseCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', updateSelectAllState);
+        });
+
+        // Apply workload color highlighting
+        const workloadCells = document.querySelectorAll('.workload-cell');
+        workloadCells.forEach(cell => {
+            const workload = parseInt(cell.getAttribute('data-workload'));
+            const maxWorkload = parseInt(cell.getAttribute('data-max'));
+
+            // Calculate color based on workload intensity
+            // Scale from green (low) -> yellow (medium) -> red (high)
+            // Using a smooth gradient based on the normalized workload
+            let color, bgColor;
+
+            if (workload === 0) {
+                // No workload - gray
+                color = '#6c757d';
+                bgColor = '#f8f9fa';
+            } else {
+                // Normalize workload to 0-1 range based on max
+                const intensity = Math.min(workload / maxWorkload, 1.0);
+
+                // Calculate RGB values for smooth gradient
+                // Green (0,128,0) -> Yellow (255,215,0) -> Red (220,53,69)
+                let r, g, b;
+
+                if (intensity < 0.5) {
+                    // Green to Yellow
+                    const t = intensity * 2; // 0 to 1
+                    r = Math.round(0 + (255 - 0) * t);
+                    g = Math.round(128 + (215 - 128) * t);
+                    b = Math.round(0);
+                } else {
+                    // Yellow to Red
+                    const t = (intensity - 0.5) * 2; // 0 to 1
+                    r = Math.round(255 + (220 - 255) * t);
+                    g = Math.round(215 + (53 - 215) * t);
+                    b = Math.round(0 + (69 - 0) * t);
+                }
+
+                color = `rgb(${r}, ${g}, ${b})`;
+                // Lighter background color
+                bgColor = `rgba(${r}, ${g}, ${b}, 0.15)`;
+            }
+
+            cell.style.backgroundColor = bgColor;
+            cell.querySelector('.workload-badge').style.color = color;
+            cell.querySelector('.workload-badge').style.fontWeight = 'bold';
+            cell.querySelector('.workload-badge').style.fontSize = '1.1em';
         });
     });
 </script>
