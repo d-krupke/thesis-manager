@@ -308,6 +308,59 @@ python gitlab_reporter.py --thesis-id 1 --ai --dry-run
 python gitlab_reporter.py --thesis-id 1 --ai --ai-model gpt-4o --dry-run
 ```
 
+## Audit Logging
+
+### AI Interaction Logging
+
+All AI interactions are logged to a dedicated audit file for transparency and debugging:
+
+**Log Location**: `scripts/logs/ai_audit.log`
+
+**What Gets Logged**:
+1. **Initialization**: Model name and timestamp when AI generator is initialized
+2. **Consent Denials**: When analysis is skipped because `ai_summary_enabled=False`
+3. **Complete AI Requests**:
+   - Thesis ID and title
+   - Number of commits analyzed
+   - Time period (days)
+   - Timestamp of request
+   - Model used
+   - **Complete context sent to OpenAI** (includes all commit metadata, file paths, statistics)
+4. **AI Responses**:
+   - Summary text
+   - Code progress score
+   - Thesis progress score
+   - Needs attention flag
+   - Reasoning
+5. **Errors**: Any failures during AI analysis
+
+**Log Format**:
+```
+2025-10-29 18:30:45 - INFO - ================================================================================
+2025-10-29 18:30:45 - INFO - AI ANALYSIS REQUEST
+2025-10-29 18:30:45 - INFO - ================================================================================
+2025-10-29 18:30:45 - INFO - Thesis ID: 1
+2025-10-29 18:30:45 - INFO - Thesis Title: Example Thesis
+2025-10-29 18:30:45 - INFO - Commits Analyzed: 5
+2025-10-29 18:30:45 - INFO - Time Period: 7 days
+2025-10-29 18:30:45 - INFO - Timestamp: 2025-10-29T18:30:45.123456
+2025-10-29 18:30:45 - INFO - Model: gpt-4o-mini
+2025-10-29 18:30:45 - INFO - --------------------------------------------------------------------------------
+2025-10-29 18:30:45 - INFO - CONTEXT SENT TO AI:
+2025-10-29 18:30:45 - INFO - --------------------------------------------------------------------------------
+2025-10-29 18:30:45 - INFO - Thesis: Example Thesis
+2025-10-29 18:30:45 - INFO - Analysis period: Last 7 days
+2025-10-29 18:30:45 - INFO - ...
+```
+
+**Use Cases**:
+- **Audit trail**: Review what data was sent to OpenAI
+- **Debugging**: Understand why AI gave specific scores
+- **Compliance**: Demonstrate data handling for privacy requirements
+- **Optimization**: Analyze AI performance and accuracy
+
+**Log Rotation**: Consider setting up log rotation (e.g., logrotate on Linux) to manage file size over time.
+
 ## Security
 
 ### API Key Storage
@@ -315,6 +368,7 @@ python gitlab_reporter.py --thesis-id 1 --ai --ai-model gpt-4o --dry-run
 - Store in `.env` file (not in git)
 - Environment variable only
 - Never log or print API keys
+- API key is NOT logged in audit file
 
 ### Data Privacy
 

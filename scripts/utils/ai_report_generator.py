@@ -16,6 +16,10 @@ from .report_generator import ReportGenerator
 
 logger = logging.getLogger(__name__)
 
+# Dedicated logger for AI interactions (logs to file for auditing)
+ai_audit_logger = logging.getLogger(__name__ + '.ai_audit')
+ai_audit_logger.setLevel(logging.DEBUG)
+
 
 class ProgressAnalysis(BaseModel):
     """
@@ -71,6 +75,9 @@ class AIReportGenerator(ReportGenerator):
         self.api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
         self.model_name = model
 
+        # Set up AI audit logging to file
+        self._setup_ai_audit_logging()
+
         if not self.api_key:
             logger.warning("OPENAI_API_KEY not set - AI analysis will be disabled")
             self.agent = None
@@ -88,9 +95,39 @@ class AIReportGenerator(ReportGenerator):
                     system_prompt=self._build_system_prompt()
                 )
                 logger.info("Initialized AI report generator with model: %s", self.model_name)
+                ai_audit_logger.info("=" * 80)
+                ai_audit_logger.info("AI Report Generator Initialized")
+                ai_audit_logger.info("Model: %s", self.model_name)
+                ai_audit_logger.info("Timestamp: %s", datetime.now().isoformat())
+                ai_audit_logger.info("=" * 80)
             except Exception as e:
                 logger.error("Failed to initialize AI agent: %s", e)
                 self.agent = None
+
+    def _setup_ai_audit_logging(self):
+        """Set up dedicated file handler for AI audit logging."""
+        # Only set up handler once
+        if ai_audit_logger.handlers:
+            return
+
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+
+        # Create file handler with daily rotation naming
+        log_file = os.path.join(log_dir, 'ai_audit.log')
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setLevel(logging.DEBUG)
+
+        # Detailed format for audit trail
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(formatter)
+
+        ai_audit_logger.addHandler(file_handler)
+        ai_audit_logger.info("AI audit logging initialized: %s", log_file)
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the AI agent."""
@@ -156,7 +193,22 @@ Set needs_attention=true if:
         ai_enabled = thesis.get('ai_summary_enabled', True)  # Default to True for backwards compatibility
 
         if not ai_enabled:
-            logger.info("AI analysis disabled for thesis #%d (student consent not given)", thesis.get('id'))
+            thesis_id = thesis.get('id', 'unknown')
+            thesis_title = thesis.get('title', 'Untitled')
+            logger.info("AI analysis disabled for thesis #%d (student consent not given)", thesis_id)
+
+            # Log consent denial in audit log
+            ai_audit_logger.info("")
+            ai_audit_logger.info("=" * 80)
+            ai_audit_logger.info("AI ANALYSIS SKIPPED - CONSENT NOT GIVEN")
+            ai_audit_logger.info("=" * 80)
+            ai_audit_logger.info("Thesis ID: %s", thesis_id)
+            ai_audit_logger.info("Thesis Title: %s", thesis_title)
+            ai_audit_logger.info("Timestamp: %s", datetime.now().isoformat())
+            ai_audit_logger.info("Reason: ai_summary_enabled = False")
+            ai_audit_logger.info("=" * 80)
+            ai_audit_logger.info("")
+
             return base_report
 
         # Add AI analysis if available and there are commits
@@ -190,19 +242,58 @@ Set needs_attention=true if:
         Returns:
             Structured progress analysis
         """
+        thesis_id = thesis.get('id', 'unknown')
+        thesis_title = thesis.get('title', 'Untitled')
+
         # Build context for AI
         context = self._build_analysis_context(commits, thesis, days)
 
+        # Log complete AI interaction for audit trail
+        ai_audit_logger.info("")
+        ai_audit_logger.info("=" * 80)
+        ai_audit_logger.info("AI ANALYSIS REQUEST")
+        ai_audit_logger.info("=" * 80)
+        ai_audit_logger.info("Thesis ID: %s", thesis_id)
+        ai_audit_logger.info("Thesis Title: %s", thesis_title)
+        ai_audit_logger.info("Commits Analyzed: %d", len(commits))
+        ai_audit_logger.info("Time Period: %d days", days)
+        ai_audit_logger.info("Timestamp: %s", datetime.now().isoformat())
+        ai_audit_logger.info("Model: %s", self.model_name)
+        ai_audit_logger.info("-" * 80)
+        ai_audit_logger.info("CONTEXT SENT TO AI:")
+        ai_audit_logger.info("-" * 80)
+        ai_audit_logger.info(context)
+        ai_audit_logger.info("-" * 80)
+
         # Run AI analysis
-        logger.debug("Running AI analysis for thesis #%d", thesis.get('id'))
-        result = self.agent.run_sync(context)
+        logger.debug("Running AI analysis for thesis #%d", thesis_id)
+        try:
+            result = self.agent.run_sync(context)
 
-        logger.debug("AI analysis complete: score=%d/%d, attention=%s",
-                    result.output.code_progress_score,
-                    result.output.thesis_progress_score,
-                    result.output.needs_attention)
+            # Log AI response
+            ai_audit_logger.info("AI RESPONSE RECEIVED:")
+            ai_audit_logger.info("-" * 80)
+            ai_audit_logger.info("Summary: %s", result.output.summary)
+            ai_audit_logger.info("Code Progress Score: %d/10", result.output.code_progress_score)
+            ai_audit_logger.info("Thesis Progress Score: %d/10", result.output.thesis_progress_score)
+            ai_audit_logger.info("Needs Attention: %s", result.output.needs_attention)
+            ai_audit_logger.info("Reasoning: %s", result.output.reasoning)
+            ai_audit_logger.info("=" * 80)
+            ai_audit_logger.info("")
 
-        return result.output
+            logger.debug("AI analysis complete: score=%d/%d, attention=%s",
+                        result.output.code_progress_score,
+                        result.output.thesis_progress_score,
+                        result.output.needs_attention)
+
+            return result.output
+
+        except Exception as e:
+            ai_audit_logger.error("AI ANALYSIS FAILED:")
+            ai_audit_logger.error("Error: %s", str(e))
+            ai_audit_logger.error("=" * 80)
+            ai_audit_logger.error("")
+            raise
 
     def _build_analysis_context(
         self,
@@ -281,10 +372,14 @@ Set needs_attention=true if:
 
         # Add custom context if provided
         ai_context = thesis.get('ai_context', '').strip()
+        logger.debug("Thesis #%d ai_context from API: %r", thesis.get('id'), ai_context)
         if ai_context:
+            logger.info("Adding custom AI context for thesis #%d: %s", thesis.get('id'), ai_context[:50])
             lines.append("Important context:")
             lines.append(f"  {ai_context}")
             lines.append("")
+        else:
+            logger.debug("No ai_context provided for thesis #%d", thesis.get('id'))
 
         lines.extend([
             f"Commits: {len(commits)}",

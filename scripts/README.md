@@ -132,6 +132,12 @@ is needed.
 - Can specify model with `--ai-model` flag
 - Gracefully falls back to basic reporting if API unavailable
 
+**Audit Logging:**
+- All AI interactions are logged to `scripts/logs/ai_audit.log`
+- Logs include: complete context sent to OpenAI, AI responses, consent denials
+- Use for transparency, debugging, and compliance
+- See [AI_FEATURES.md](AI_FEATURES.md#audit-logging) for details
+
 ### Scheduled Execution
 
 You can run this script via cron or systemd timer for weekly reports:
