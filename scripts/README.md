@@ -138,14 +138,39 @@ is needed.
 - Use for transparency, debugging, and compliance
 - See [AI_FEATURES.md](AI_FEATURES.md#audit-logging) for details
 
-### Scheduled Execution
+### Scheduled Execution with Cron
 
-You can run this script via cron or systemd timer for weekly reports:
+**Recommended: Use `uv` for automated scheduling.**
 
-```cron
-# Run every Monday at 9 AM
-0 9 * * 1 cd /path/to/thesis-manager/scripts && /path/to/conda/envs/web312/bin/python gitlab_reporter.py
+The script includes inline dependencies (PEP 723), so `uv` automatically handles everything:
+
+```bash
+# 1. Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Test the script
+cd scripts
+./gitlab_reporter.py --dry-run --ai
+
+# 3. Add to crontab
+crontab -e
+# Add this line (replace path):
+0 9 * * 1 cd /path/to/thesis-manager/scripts && ./gitlab_reporter.py --ai >> logs/cron.log 2>&1
 ```
+
+**Why use `uv`?**
+- Script has inline dependencies at the top - no virtual environment needed
+- `uv` automatically manages dependencies and caching
+- Works perfectly with cron - minimal environment, maximum reliability
+- Fast - dependencies cached after first run
+
+**See [CRON_SETUP.md](CRON_SETUP.md) for:**
+- Complete setup guide
+- Multiple scheduling options (weekly, daily, monthly)
+- Troubleshooting tips
+- Log management
+- Email notifications
+- Systemd timer alternative
 
 ## Report Format
 

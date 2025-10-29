@@ -63,6 +63,9 @@ db.sqlite3-journal
 /staticfiles/
 /media/
 
+# Script logs (including AI audit logs)
+/scripts/logs/
+
 # Flask stuff:
 instance/
 .webassets-cache

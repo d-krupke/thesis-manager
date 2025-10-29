@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --quiet
+# /// script
+# dependencies = [
+#   "python-gitlab>=4.0.0",
+#   "requests>=2.31.0",
+#   "python-dotenv>=1.0.0",
+#   "pydantic-ai>=0.0.14",
+#   "pydantic>=2.0.0",
+#   "openai>=1.52.0",
+# ]
+# ///
 """
 GitLab Weekly Reporter for Thesis Manager
 
@@ -16,19 +26,16 @@ Environment variables (from .env):
   GITLAB_TOKEN              - GitLab personal access token
   THESIS_MANAGER_URL        - Thesis Manager instance URL
   THESIS_MANAGER_API_TOKEN  - Knox authentication token
+  OPENAI_API_KEY            - OpenAI API key (for AI analysis)
 
-Usage examples:
-  # Generate reports for all active theses
-  python gitlab_reporter.py
+Usage with uv (recommended - auto-manages dependencies):
+  ./gitlab_reporter.py --ai              # With AI analysis
+  ./gitlab_reporter.py --thesis-id 5     # Test specific thesis
+  ./gitlab_reporter.py --dry-run --ai    # Test mode
+  ./gitlab_reporter.py --days 14         # Custom period
 
-  # Test with a specific thesis ID
-  python gitlab_reporter.py --thesis-id 5
-
-  # Test mode (dry-run, no comments created)
-  python gitlab_reporter.py --dry-run
-
-  # Custom lookback period
-  python gitlab_reporter.py --days 14
+Usage with python (requires manual dependency installation):
+  python gitlab_reporter.py --ai
 """
 
 import sys
