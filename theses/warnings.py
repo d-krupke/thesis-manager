@@ -174,7 +174,10 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
     # CHECK 6: Long time in early phases without progress
     # ========================================================================
     if thesis.date_first_contact and thesis.phase in ['first_contact', 'topic_discussion', 'literature_research']:
-        days_in_early_phase = (today - thesis.date_first_contact).days
+        last_date = thesis.date_first_contact
+        if thesis.date_topic_selected:
+            last_date = thesis.date_topic_selected
+        days_in_early_phase = (today - last_date).days
 
         if days_in_early_phase > 90:
             # More than 3 months in early phase
