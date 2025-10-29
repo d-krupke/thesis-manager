@@ -296,6 +296,16 @@ class ThesisViewSet(viewsets.ModelViewSet):
             return ThesisCreateUpdateSerializer
         return ThesisSerializer
 
+    def perform_update(self, serializer):
+        """
+        Called when updating a thesis via PUT or PATCH.
+
+        Sets the current user on the instance so that auto-generated comments
+        from signals can track who made the changes.
+        """
+        serializer.instance._current_user = self.request.user
+        serializer.save()
+
     @extend_schema(
         description="Get all comments for this thesis",
         responses={200: CommentSerializer(many=True)}

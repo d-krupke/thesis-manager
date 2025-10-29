@@ -226,14 +226,22 @@ def create_comments_after_save(sender, instance, created, **kwargs):
         # This is set by the view in views.py (ThesisUpdateView.form_valid)
         user = getattr(instance, '_current_user', None)
 
-        # Create a comment for each change
-        for change_text in instance._pending_changes:
-            Comment.objects.create(
-                thesis=instance,
-                user=user,  # May be None for API/admin changes
-                text=change_text,
-                is_auto_generated=True  # Mark as automatic (not user-written)
+        # Create a single comment with all changes combined
+        if len(instance._pending_changes) == 1:
+            # Single change - use as-is
+            comment_text = instance._pending_changes[0]
+        else:
+            # Multiple changes - combine into a bulleted list
+            comment_text = "Multiple changes:\n" + "\n".join(
+                f"• {change}" for change in instance._pending_changes
             )
+
+        Comment.objects.create(
+            thesis=instance,
+            user=user,  # May be None for API/admin changes
+            text=comment_text,
+            is_auto_generated=True  # Mark as automatic (not user-written)
+        )
 
         # Clean up: Remove the temporary attribute
         delattr(instance, '_pending_changes')
