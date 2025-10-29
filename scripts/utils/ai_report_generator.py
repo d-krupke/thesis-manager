@@ -117,7 +117,8 @@ For code_progress_score (0-10):
 - 9-10: Excellent, substantial progress
 
 For thesis_progress_score (0-10):
-- Look for LaTeX files (.tex)
+- Look for LaTeX files (.tex, .bib)
+- .txt and .md files are not considered thesis writing
 - 0-2: No thesis writing detected
 - 3-4: Minimal writing
 - 5-6: Some writing progress
@@ -128,6 +129,7 @@ Set needs_attention=true if:
 - Very low activity with deadline approaching
 - No progress for extended period
 - Concerning patterns (e.g., only last-minute work)
+- Be more lenient at early stages of the thesis
 """
 
     def generate_report(
@@ -257,7 +259,7 @@ Set needs_attention=true if:
                 file_lower = file_path.lower()
                 if any(ext in file_lower for ext in ['.py', '.java', '.cpp', '.c', '.js', '.ts', '.rs', '.go', '.h', '.hpp']):
                     code_files.append(file_path)
-                elif any(ext in file_lower for ext in ['.tex', '.bib', '.md', 'readme']):
+                elif any(ext in file_lower for ext in ['.tex', '.bib']):
                     thesis_files.append(file_path)
                 else:
                     other_files.append(file_path)
