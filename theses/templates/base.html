@@ -169,6 +169,116 @@
             cursor: pointer;
             user-select: none;
         }
+
+        /* Markdown Comment Styles */
+        .comment-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .comment-content h1,
+        .comment-content h2,
+        .comment-content h3,
+        .comment-content h4,
+        .comment-content h5,
+        .comment-content h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .comment-content h1 { font-size: 1.5rem; }
+        .comment-content h2 { font-size: 1.3rem; }
+        .comment-content h3 { font-size: 1.1rem; }
+        .comment-content h4 { font-size: 1rem; }
+        .comment-content h5 { font-size: 0.95rem; }
+        .comment-content h6 { font-size: 0.9rem; }
+
+        .comment-content p {
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-content ul,
+        .comment-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-content li {
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-content code {
+            background-color: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        .comment-content pre {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            overflow-x: auto;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-content pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: 0.875rem;
+        }
+
+        .comment-content blockquote {
+            border-left: 3px solid #dee2e6;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .comment-content table {
+            width: 100%;
+            margin-bottom: 0.75rem;
+            border-collapse: collapse;
+        }
+
+        .comment-content table th,
+        .comment-content table td {
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .comment-content table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .comment-content hr {
+            margin: 1rem 0;
+            border: 0;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .comment-content a {
+            color: var(--university-color);
+            text-decoration: underline;
+        }
+
+        .comment-content a:hover {
+            color: var(--university-color-dark);
+        }
+
+        .comment-content strong {
+            font-weight: 600;
+        }
+
+        .comment-content em {
+            font-style: italic;
+        }
     </style>
 </head>
 <body>

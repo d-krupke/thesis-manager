@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load markdown_extras %}
 
 {% block title %}{{ thesis.title|default:"Thesis Details" }} - Thesis Manager{% endblock %}
 
@@ -296,7 +297,7 @@
                                     </div>
                                     {% endif %}
                                 </div>
-                                <div>{{ comment.text|linebreaks }}</div>
+                                <div class="comment-content">{{ comment.text|markdown }}</div>
                             </div>
                         </div>
                         {% endfor %}
