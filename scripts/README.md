@@ -201,6 +201,66 @@ Files changed:
   - `src/solver.rs`
 ```
 
+## Error Reporting
+
+The script automatically posts error comments to theses when evaluation fails. This ensures supervisors are notified about configuration or access issues.
+
+**Error scenarios that trigger comments:**
+
+1. **Invalid GitLab URL**
+   - Repository URL cannot be parsed
+   - Example: Malformed URLs, typos in the repository path
+   - Action required: Update the repository URL in thesis settings
+
+2. **GitLab Repository Not Accessible**
+   - Repository doesn't exist or has been moved/renamed
+   - Bot account lacks read permissions
+   - Repository is private without granted access
+   - Action required: Grant read access to the thesis manager bot account
+
+3. **Commit Fetch Failures**
+   - GitLab API errors or timeouts
+   - Network connectivity issues
+   - Action required: Usually temporary; contact admin if persistent
+
+4. **Report Generation Failures**
+   - AI API errors (when using `--ai`)
+   - System errors during report generation
+   - Action required: Contact thesis manager administrator
+
+**Error comment format:**
+
+Error comments are clearly marked with the ⚠️ emoji and include:
+- Clear description of the error
+- Possible causes (where applicable)
+- Technical details (URLs, error messages)
+- Specific action items for resolution
+- Marked as auto-generated (triggers email notifications to supervisors)
+
+**Example error comment:**
+
+```markdown
+⚠️ **Automatic Weekly Report - Error**
+
+Could not analyze repository activity for the past 7 days.
+
+**Error:** GitLab repository not accessible.
+
+**Possible causes:**
+- The repository does not exist or has been moved/renamed
+- The bot account does not have access permissions to this repository
+- The repository is private and access has not been granted
+- The GitLab server is temporarily unavailable
+
+**Repository URL:** `https://gitlab.example.com/student/thesis-project`
+**Project Path:** `student/thesis-project`
+
+**Action Required:** Please verify the repository exists and grant read access
+to the thesis manager bot account.
+```
+
+**Dry run mode:** Error comments respect `--dry-run` mode and won't be posted during testing.
+
 ## Extending with AI
 
 ### Current Design Decisions
