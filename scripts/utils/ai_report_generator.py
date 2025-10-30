@@ -62,7 +62,7 @@ class AIReportGenerator(ReportGenerator):
     at the top of reports. Falls back to basic reporting if AI is unavailable.
     """
 
-    def __init__(self, openai_api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(self, openai_api_key: Optional[str] = None, model: str = "gpt-5-mini"):
         """
         Initialize AI report generator.
 

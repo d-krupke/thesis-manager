@@ -155,7 +155,7 @@ Examples:
   python gitlab_reporter.py --ai
 
   # AI with specific model
-  python gitlab_reporter.py --ai --ai-model gpt-4o
+  python gitlab_reporter.py --ai --ai-model gpt-5-mini
 
   # Verbose output
   python gitlab_reporter.py --verbose
@@ -190,8 +190,8 @@ Examples:
     )
     parser.add_argument(
         '--ai-model',
-        default='gpt-4o-mini',
-        help='OpenAI model to use for AI analysis (default: gpt-4o-mini)'
+        default='gpt-5-mini',
+        help='OpenAI model to use for AI analysis (default: gpt-5-mini)'
     )
 
     args = parser.parse_args()
