@@ -80,7 +80,7 @@ def my_handler(sender, instance, created, **kwargs):
 
 from django.db.models.signals import pre_save, m2m_changed, post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 from .models import Thesis, Comment
@@ -311,6 +311,11 @@ def send_comment_notification_email(sender, instance, created, **kwargs):
     # Email subject line
     subject = f"[Thesis Manager] {comment_type} on thesis: {thesis_title}"
 
+    # Get admin email for contact information (if configured)
+    admin_email = ''
+    if hasattr(settings, 'ADMINS') and settings.ADMINS:
+        admin_email = settings.ADMINS[0][1]  # Get email from first admin tuple
+
     # Prepare template context (data passed to email template)
     context = {
         'thesis': thesis,
@@ -319,15 +324,19 @@ def send_comment_notification_email(sender, instance, created, **kwargs):
         'comment_type': comment_type,
         'student_names': student_names,
         'thesis_title': thesis_title,
+        'admin_email': admin_email,
     }
 
+    # Collect email addresses
+    recipient_emails = [supervisor.email for supervisor in supervisors]
+
     try:
-        # Try to render email from template
-        # Template: templates/emails/comment_notification.txt
-        message = render_to_string('emails/comment_notification.txt', context)
-    except:
-        # Fallback: Create simple text email if template doesn't exist
-        message = f"""
+        # Render plain text version
+        try:
+            text_message = render_to_string('emails/comment_notification.txt', context)
+        except:
+            # Fallback: Create simple text email if template doesn't exist
+            text_message = f"""
 A {comment_type.lower()} has been added to a thesis you are supervising.
 
 Thesis: {thesis_title}
@@ -341,18 +350,28 @@ Comment by {comment_author}:
 This is an automated notification from Thesis Manager.
 """
 
-    # Collect email addresses
-    recipient_emails = [supervisor.email for supervisor in supervisors]
+        # Render HTML version
+        try:
+            html_message = render_to_string('emails/comment_notification.html', context)
+        except:
+            # If HTML template fails, just send plain text
+            html_message = None
 
-    try:
-        # Send the email
-        send_mail(
+        # Create email with both plain text and HTML alternatives
+        email = EmailMultiAlternatives(
             subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,  # Must be configured in settings
-            recipient_list=recipient_emails,
-            fail_silently=True,  # Don't crash if email fails (e.g., SMTP not configured)
+            body=text_message,  # Plain text version (fallback)
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=recipient_emails,
         )
+
+        # Attach HTML version if available
+        if html_message:
+            email.attach_alternative(html_message, "text/html")
+
+        # Send the email
+        email.send(fail_silently=True)
+
     except Exception as e:
         # Log the error but don't crash the application
         # In production, consider using proper logging (logging module)

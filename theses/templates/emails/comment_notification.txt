@@ -25,3 +25,6 @@ Presentation: {{ thesis.date_presentation }}
 ---
 This is an automated notification from Thesis Manager.
 You are receiving this email because you are listed as a supervisor for this thesis.
+
+IMPORTANT: This email address is not monitored. Please do not reply to this email.
+{% if admin_email %}For technical issues or questions, please contact: {{ admin_email }}{% endif %}

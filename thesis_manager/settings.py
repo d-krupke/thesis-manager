@@ -174,6 +174,13 @@ SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 # Email notifications enabled (only if proper email backend is configured)
 EMAIL_NOTIFICATIONS_ENABLED = EMAIL_HOST and EMAIL_HOST_USER
 
+# Admin contact information
+# ADMINS receive error emails and are the contact point for system issues
+# Format: Set ADMIN_EMAIL environment variable
+# Example: ADMIN_EMAIL=admin@example.com
+admin_email = os.environ.get('ADMIN_EMAIL', '').strip()
+ADMINS = [('Admin', admin_email)] if admin_email else []
+
 # Supervisor workload thresholds
 # These define when a supervisor's workload is considered low/medium/high
 # Workload is based on the number of active (non-completed/non-abandoned) theses

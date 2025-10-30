@@ -1,0 +1,220 @@
+{% load markdown_extras %}<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            margin: 0;
+            color: #0d6efd;
+            font-size: 20px;
+        }
+        .info-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-table td:first-child {
+            font-weight: 600;
+            color: #6c757d;
+            width: 120px;
+        }
+        .comment-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .comment-box.auto-generated {
+            border-left-color: #6c757d;
+            background-color: #f1f3f5;
+        }
+        .comment-meta {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .comment-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        /* Markdown styles in email */
+        .comment-content code {
+            background-color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+            border: 1px solid #dee2e6;
+        }
+        .comment-content pre {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+        .comment-content pre code {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            color: inherit;
+        }
+        .comment-content h1, .comment-content h2, .comment-content h3,
+        .comment-content h4, .comment-content h5, .comment-content h6 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .comment-content h1 { font-size: 1.5em; border-bottom: 2px solid #e9ecef; padding-bottom: 4px; }
+        .comment-content h2 { font-size: 1.3em; border-bottom: 1px solid #e9ecef; padding-bottom: 4px; }
+        .comment-content h3 { font-size: 1.1em; }
+        .comment-content ul, .comment-content ol {
+            padding-left: 25px;
+            margin: 8px 0;
+        }
+        .comment-content li {
+            margin: 4px 0;
+        }
+        .comment-content blockquote {
+            border-left: 3px solid #dee2e6;
+            padding-left: 15px;
+            margin-left: 0;
+            color: #6c757d;
+        }
+        .comment-content a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .comment-content a:hover {
+            text-decoration: underline;
+        }
+        .comment-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+        }
+        .comment-content table th,
+        .comment-content table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+        .comment-content table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-auto {
+            background-color: #6c757d;
+            color: #ffffff;
+        }
+        .badge-manual {
+            background-color: #0d6efd;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>{{ comment_type }}</h2>
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td>Thesis:</td>
+                <td><strong>{{ thesis_title }}</strong></td>
+            </tr>
+            <tr>
+                <td>Student(s):</td>
+                <td>{{ student_names }}</td>
+            </tr>
+            <tr>
+                <td>Phase:</td>
+                <td>{{ thesis.get_phase_display }}</td>
+            </tr>
+            <tr>
+                <td>Type:</td>
+                <td>{{ thesis.get_thesis_type_display }}</td>
+            </tr>
+            {% if thesis.date_deadline %}
+            <tr>
+                <td>Deadline:</td>
+                <td>{{ thesis.date_deadline }}</td>
+            </tr>
+            {% endif %}
+            {% if thesis.date_presentation %}
+            <tr>
+                <td>Presentation:</td>
+                <td>{{ thesis.date_presentation }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <div class="comment-box{% if comment.is_auto_generated %} auto-generated{% endif %}">
+            <div class="comment-meta">
+                {% if comment.is_auto_generated %}
+                <span class="badge badge-auto">AUTO-GENERATED</span>
+                {% else %}
+                <span class="badge badge-manual">COMMENT</span>
+                {% endif %}
+                <strong>{{ comment_author }}</strong> · {{ comment.created_at|date:"Y-m-d H:i" }}
+            </div>
+            <div class="comment-content">
+                {{ comment.text|markdown }}
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated notification from Thesis Manager.<br>
+            You are receiving this email because you are listed as a supervisor for this thesis.</p>
+            <p style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; color: #856404;">
+                <strong>⚠️ IMPORTANT:</strong> This email address is not monitored. Please do not reply to this email.
+                {% if admin_email %}<br>For technical issues or questions, please contact: <a href="mailto:{{ admin_email }}" style="color: #856404; font-weight: 600;">{{ admin_email }}</a>{% endif %}
+            </p>
+        </div>
+    </div>
+</body>
+</html>
