@@ -104,7 +104,8 @@ class ThesisForm(forms.ModelForm):
             'students', 'supervisors',
             'date_first_contact', 'date_topic_selected', 'date_registration',
             'date_deadline', 'date_presentation', 'date_review', 'date_final_discussion',
-            'git_repository', 'description', 'task_description', 'review'
+            'git_repository', 'description', 'task_description', 'review',
+            'ai_summary_enabled', 'ai_context'
         ]
         # Widgets customize the HTML input elements
         # attrs={'class': 'form-control'}: Adds Bootstrap CSS classes for styling
@@ -129,6 +130,9 @@ class ThesisForm(forms.ModelForm):
             # Larger textareas for multi-paragraph formal documents
             'task_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Formal task description...'}),
             'review': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Formal thesis review...'}),
+            # AI settings
+            'ai_summary_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ai_context': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': '500', 'placeholder': 'E.g., "Pure theory thesis, no implementation expected"'}),
         }
 
 

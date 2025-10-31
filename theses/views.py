@@ -207,6 +207,14 @@ class ThesisListView(LoginRequiredMixin, ListView):
                 if count > 0:
                     stats['phases'][phase_label] = count
 
+            # Calculate active thesis count (excluding completed and abandoned)
+            active_count = Thesis.objects.filter(
+                supervisors=supervisor
+            ).exclude(
+                phase__in=['completed', 'abandoned']
+            ).count()
+            stats['active'] = active_count
+
             # Only include supervisors with active theses
             total = sum(stats['phases'].values())
             if total > 0:
@@ -214,6 +222,16 @@ class ThesisListView(LoginRequiredMixin, ListView):
                 supervisor_stats.append(stats)
 
         context['supervisor_stats'] = supervisor_stats
+
+        # Add workload thresholds and calculate max workload for color scaling
+        from django.conf import settings
+        context['workload_low_threshold'] = settings.WORKLOAD_LOW_THRESHOLD
+        context['workload_medium_threshold'] = settings.WORKLOAD_MEDIUM_THRESHOLD
+
+        # Calculate max active workload for color scaling
+        # Use max(any_workload, 6) for adaptive scaling
+        max_active = max([stat['active'] for stat in supervisor_stats], default=0)
+        context['workload_max'] = max(max_active, 6)
 
         # Generate warnings for all theses
         # This checks all active theses for conditions that need attention

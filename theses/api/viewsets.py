@@ -296,6 +296,16 @@ class ThesisViewSet(viewsets.ModelViewSet):
             return ThesisCreateUpdateSerializer
         return ThesisSerializer
 
+    def perform_update(self, serializer):
+        """
+        Called when updating a thesis via PUT or PATCH.
+
+        Sets the current user on the instance so that auto-generated comments
+        from signals can track who made the changes.
+        """
+        serializer.instance._current_user = self.request.user
+        serializer.save()
+
     @extend_schema(
         description="Get all comments for this thesis",
         responses={200: CommentSerializer(many=True)}
@@ -322,14 +332,23 @@ class ThesisViewSet(viewsets.ModelViewSet):
         Custom endpoint: POST /api/theses/{id}/add_comment/
         Add a new comment to a specific thesis.
 
-        The user is automatically set from the request.
+        The thesis and user are automatically set from the URL and request.
+        Accepts optional 'is_auto_generated' field to mark automated comments.
         """
         thesis = self.get_object()
+
+        # Create a mutable copy of request data and add thesis ID
+        # This ensures validation passes while thesis is automatically set
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        data['thesis'] = thesis.id
+
         # Deserialize the incoming JSON data
-        serializer = CommentSerializer(data=request.data, context={'request': request})
+        serializer = CommentSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             # Save with additional fields not in the request
-            serializer.save(thesis=thesis, user=request.user)
+            # Allow is_auto_generated to be set via request data (defaults to False)
+            is_auto_generated = request.data.get('is_auto_generated', False)
+            serializer.save(user=request.user, is_auto_generated=is_auto_generated)
             # Return 201 Created with the new comment data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         # Return 400 Bad Request with validation errors
