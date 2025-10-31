@@ -242,7 +242,7 @@ queryset = Comment.objects.select_related('user', 'thesis').all()
 The application supports deployment behind nginx reverse proxy with HTTPS:
 - Environment variables: `USE_X_FORWARDED_HOST`, `USE_X_FORWARDED_PORT`, `SECURE_PROXY_SSL_HEADER`
 - CSRF protection: `CSRF_TRUSTED_ORIGINS` must include your domain(s)
-- See `DEPLOYMENT.md` for full production setup
+- See `docs/deployment.md` for full production setup
 
 ### Static Files Handling
 

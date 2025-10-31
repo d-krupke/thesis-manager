@@ -1,14 +1,48 @@
-# GitLab Reporter Scripts
+# Thesis Manager Scripts
 
-Automated reporting tools for tracking student thesis progress via GitLab repository activity.
+This directory contains utility scripts for the Thesis Manager system.
 
-## Overview
+## Available Scripts
 
-The `gitlab_reporter.py` script automatically analyzes GitLab repositories for active theses and generates weekly activity reports that are posted as comments to the Thesis Manager system.
+### 1. Demo Data Population (`populate_demo_data.py`)
 
-## Architecture
+Populates the Thesis Manager with example data for demonstration purposes. Creates students, supervisors, theses in various phases, and sample comments using the REST API.
 
-The script is designed with modularity and extensibility in mind, particularly for future AI enhancement:
+**Usage:**
+```bash
+# First, create an API token at http://localhost/api_tokens/
+# Set environment variables
+export THESIS_MANAGER_URL="http://localhost"
+export THESIS_MANAGER_API_TOKEN="your_token_here"
+
+# Run the script
+cd scripts
+python populate_demo_data.py
+
+# Or skip confirmation prompt
+python populate_demo_data.py --yes
+```
+
+**What it creates:**
+- 10 sample students
+- 5 sample supervisors
+- 15 theses in various phases (first_contact → completed)
+- Sample comments for each thesis
+
+**Requirements:**
+- Python 3.8+
+- `requests` library (in scripts/requirements.txt)
+- Valid Knox API token
+
+**Note:** This is intended for demonstration purposes only. Do NOT run on production systems with real data!
+
+### 2. GitLab Reporter (`gitlab_reporter.py`)
+
+Automated reporting tool for tracking student thesis progress via GitLab repository activity. Analyzes GitLab repositories for active theses and generates weekly activity reports that are posted as comments to the Thesis Manager system.
+
+## GitLab Reporter - Architecture
+
+The GitLab Reporter script is designed with modularity and extensibility in mind, particularly for future AI enhancement:
 
 ### Components
 
@@ -35,7 +69,7 @@ The script is designed with modularity and extensibility in mind, particularly f
    - Processes each thesis: fetch commits → generate report → post comment
    - Function: `process_thesis()`, `main()`
 
-## Setup
+## GitLab Reporter - Setup
 
 ### 1. Install Dependencies
 
@@ -71,7 +105,7 @@ Your GitLab token needs at least `read_repository` scope to access:
 - Diff information
 - Branch information
 
-## Usage
+## GitLab Reporter - Usage
 
 ### Basic Usage
 
@@ -172,7 +206,7 @@ crontab -e
 - Email notifications
 - Systemd timer alternative
 
-## Report Format
+## GitLab Reporter - Report Format
 
 The generated reports include:
 
@@ -201,7 +235,7 @@ Files changed:
   - `src/solver.rs`
 ```
 
-## Error Reporting
+## GitLab Reporter - Error Reporting
 
 The script automatically posts error comments to theses when evaluation fails. This ensures supervisors are notified about configuration or access issues.
 
@@ -261,7 +295,7 @@ to the thesis manager bot account.
 
 **Dry run mode:** Error comments respect `--dry-run` mode and won't be posted during testing.
 
-## Extending with AI
+## GitLab Reporter - Extending with AI
 
 ### Current Design Decisions
 
@@ -367,7 +401,7 @@ The `commits` list contains rich data for each commit:
 - `files`: List of changed files with status (new, renamed, deleted)
 - `branches`: Branches containing this commit
 
-## Troubleshooting
+## GitLab Reporter - Troubleshooting
 
 ### Common Issues
 
@@ -391,7 +425,7 @@ The `commits` list contains rich data for each commit:
 - Check user permissions (needs ability to create comments)
 - Test API access manually: `curl -H "Authorization: Token $TOKEN" $URL/api/theses/`
 
-## Development
+## GitLab Reporter - Development
 
 ### Testing
 

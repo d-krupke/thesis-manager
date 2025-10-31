@@ -2,12 +2,24 @@
 
 A Django-based web application for managing student theses at academic institutes. Track theses from first contact through completion, including all important dates, student and supervisor information, and repository links.
 
+## Screenshots
+
+### Thesis Overview Page
+Get a comprehensive view of all theses with supervisor workload distribution, warnings for upcoming deadlines, and powerful filtering options.
+
+![Thesis Overview](docs/images/example.png)
+
+### Thesis Detail View
+Track all aspects of a thesis including timeline, people involved, repository links, and a complete comment history with automatic change tracking.
+
+![Thesis Detail View](docs/images/example_thesis.png)
+
 ## Quick Links
 
 - **[Installation & Setup](#installation--setup)** - Get started quickly
-- **[API Documentation](API.md)** - REST API usage guide
-- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment with nginx
-- **[Email Setup](EMAIL_SETUP_GUIDE.md)** - Configure email notifications
+- **[API Documentation](docs/api.md)** - REST API usage guide
+- **[Deployment Guide](docs/deployment.md)** - Production deployment with nginx
+- **[Email Setup](docs/email-setup.md)** - Configure email notifications
 - **[Troubleshooting](#troubleshooting)** - Common issues and solutions
 - **[License](#license)** - MIT License
 
@@ -34,7 +46,7 @@ A Django-based web application for managing student theses at academic institute
   - Automatic OpenAPI/Swagger documentation
   - Support for filtering, search, and pagination
   - Multiple tokens per user for different applications
-  - See [API.md](API.md) for complete documentation
+  - See [docs/api.md](docs/api.md) for complete documentation
 - **Git Repository Links**: Track student repository URLs
 - **Filtering & Search**: Filter by phase, thesis type, and search by title or student name
 - **Django Admin Interface**: Full administrative access for advanced management
@@ -93,7 +105,7 @@ For easy setup, use the provided setup script:
 **Important**: After setup, review and update your `.env` file with secure values:
 - Change `SECRET_KEY` to a random string (especially for production)
 - Update `POSTGRES_PASSWORD` from the default
-- Configure email settings if needed (see [Email Setup Guide](EMAIL_SETUP_GUIDE.md))
+- Configure email settings if needed (see [Email Setup Guide](docs/email-setup.md))
 
 ### Manual Setup (Advanced)
 
@@ -337,7 +349,7 @@ The Thesis Manager provides a comprehensive REST API for programmatic access.
 3. **View Documentation**:
    - Interactive Swagger UI: http://localhost/api/docs/
    - ReDoc: http://localhost/api/redoc/
-   - See [API.md](API.md) for complete usage guide
+   - See [docs/api.md](docs/api.md) for complete usage guide
 
 ### API Endpoints
 
@@ -346,7 +358,7 @@ The Thesis Manager provides a comprehensive REST API for programmatic access.
 - `/api/supervisors/` - Manage supervisors
 - `/api/comments/` - Manage comments
 
-For detailed API documentation, examples, and best practices, see **[API.md](API.md)**.
+For detailed API documentation, examples, and best practices, see **[docs/api.md](docs/api.md)**.
 
 ## Docker Commands
 
@@ -425,7 +437,7 @@ docker-compose up --build
 
 ## Production Deployment
 
-For production deployment behind an nginx reverse proxy on a subdomain, please refer to the comprehensive **[DEPLOYMENT.md](DEPLOYMENT.md)** guide.
+For production deployment behind an nginx reverse proxy on a subdomain, please refer to the comprehensive **[Deployment Guide](docs/deployment.md)**.
 
 The deployment guide covers:
 - Setting up nginx as a reverse proxy
@@ -448,7 +460,7 @@ The deployment guide covers:
    - SECURE_PROXY_SSL_HEADER=True
    ```
 
-2. **Configure nginx** as a reverse proxy (see [DEPLOYMENT.md](DEPLOYMENT.md))
+2. **Configure nginx** as a reverse proxy (see [Deployment Guide](docs/deployment.md))
 
 3. **Set up SSL** with Let's Encrypt:
    ```bash
@@ -489,10 +501,16 @@ thesis-manager/
 ├── .env.example                # Environment variables template
 ├── manage.py                   # Django management script
 ├── README.md                   # This file
-├── API.md                      # API documentation
-├── DEPLOYMENT.md               # Production deployment guide
-├── EMAIL_SETUP_GUIDE.md        # Email configuration guide
 ├── CHANGELOG.md                # Version history
+├── CLAUDE.md                   # Project instructions for Claude Code
+│
+├── docs/                       # Documentation
+│   ├── api.md                  # API documentation and usage guide
+│   ├── deployment.md           # Production deployment guide
+│   ├── email-setup.md          # Email configuration guide
+│   └── images/                 # Screenshots and images
+│       ├── example.png         # Thesis overview screenshot
+│       └── example_thesis.png  # Thesis detail screenshot
 │
 ├── thesis_manager/             # Django project settings
 │   ├── settings.py             # Main settings (DB, API, Knox, etc.)
