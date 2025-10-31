@@ -177,6 +177,14 @@
             user-select: none;
         }
 
+        /* Navbar Logo */
+        .navbar-brand-logo {
+            height: 30px;
+            width: auto;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
         /* Markdown Comment Styles */
         .comment-content {
             font-size: 0.95rem;
@@ -291,7 +299,10 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'thesis_list' %}">Thesis Manager</a>
+            <a class="navbar-brand" href="{% url 'thesis_list' %}">
+                <img src="{% static 'images/favicon-32x32.png' %}" alt="Thesis Manager Logo" class="navbar-brand-logo">
+                Thesis Manager
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
