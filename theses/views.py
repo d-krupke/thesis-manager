@@ -78,7 +78,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from knox.models import AuthToken
 from .models import Thesis, Student, Supervisor, Comment
@@ -588,21 +588,25 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
         # Prepare email content
         subject = 'Welcome to Thesis Manager - Set Your Password'
-        message = render_to_string('registration/new_user_email.html', {
+        context = {
             'user': user,
             'reset_url': reset_url,
             'created_by': self.request.user,
-        })
+        }
 
-        # Send the email
+        # Render plain text message (required fallback)
+        text_message = render_to_string('registration/new_user_email.html', context)
+
+        # Send the email using EmailMultiAlternatives (consistent with signals.py)
         try:
-            send_mail(
+            email = EmailMultiAlternatives(
                 subject=subject,
-                message=message,
+                body=text_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+                to=[user.email],
             )
+            email.send(fail_silently=False)
+
             messages.success(
                 self.request,
                 f'User account created successfully for {user.get_full_name()} ({user.username}). '
