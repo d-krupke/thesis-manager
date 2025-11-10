@@ -65,11 +65,11 @@
                     <label class="form-check-label" for="col_date_final_discussion">Final Discussion</label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input export-column" type="checkbox" value="git_repository" id="col_git_repository">
+                    <input class="form-check-input export-column" type="checkbox" value="git_repository" id="col_git_repository" checked>
                     <label class="form-check-label" for="col_git_repository">Git Repository</label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input export-column" type="checkbox" value="description" id="col_description">
+                    <input class="form-check-input export-column" type="checkbox" value="description" id="col_description" checked>
                     <label class="form-check-label" for="col_description">Description</label>
                 </div>
                 <hr>
@@ -545,23 +545,23 @@
 
             // Add filter parameters
             {% if search_query %}
-            params.append('search', '{{ search_query }}');
+            params.append('search', '{{ search_query|escapejs }}');
             {% endif %}
 
             {% for phase in selected_phases %}
-            params.append('phase', '{{ phase }}');
+            params.append('phase', '{{ phase|escapejs }}');
             {% endfor %}
 
             {% if current_type %}
-            params.append('type', '{{ current_type }}');
+            params.append('type', '{{ current_type|escapejs }}');
             {% endif %}
 
             {% if current_sort %}
-            params.append('sort', '{{ current_sort }}');
+            params.append('sort', '{{ current_sort|escapejs }}');
             {% endif %}
 
             {% if current_order %}
-            params.append('order', '{{ current_order }}');
+            params.append('order', '{{ current_order|escapejs }}');
             {% endif %}
 
             // Add selected columns
