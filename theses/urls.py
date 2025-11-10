@@ -95,5 +95,5 @@ urlpatterns = [
     path('api-tokens/delete-all/', views.api_tokens_delete_all, name='api_tokens_delete_all'),
 
     # Admin User Management URLs
-    path('admin/create-user/', views.AdminCreateUserView.as_view(), name='admin_create_user'),
+    path('users/create/', views.AdminCreateUserView.as_view(), name='admin_create_user'),
 ]
