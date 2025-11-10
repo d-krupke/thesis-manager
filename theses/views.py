@@ -160,6 +160,34 @@ class ThesisListView(LoginRequiredMixin, ListView):
                 models.Q(students__last_name__icontains=search)
             ).distinct()  # Remove duplicates (needed when filtering on ManyToMany)
 
+        # Handle sorting
+        # Get sort field and order from URL parameters (?sort=date_deadline&order=desc)
+        sort_by = self.request.GET.get('sort', 'date_first_contact')  # Default sort by first contact date
+        order = self.request.GET.get('order', 'asc')  # Default ascending order
+
+        # Define allowed sort fields to prevent SQL injection
+        allowed_sort_fields = [
+            'title', 'thesis_type', 'phase',
+            'date_first_contact', 'date_registration', 'date_deadline',
+            'date_presentation', 'date_review', 'date_final_discussion'
+        ]
+
+        if sort_by in allowed_sort_fields:
+            # Add '-' prefix for descending order
+            order_prefix = '-' if order == 'desc' else ''
+
+            # Handle NULL values: put them at the end
+            # Use F() expression with nulls_last parameter
+            from django.db.models import F
+            if sort_by.startswith('date_'):
+                # For date fields, ensure NULLs go to the end
+                queryset = queryset.order_by(
+                    F(sort_by).desc(nulls_last=True) if order == 'desc' else F(sort_by).asc(nulls_last=True)
+                )
+            else:
+                # For other fields, use standard ordering
+                queryset = queryset.order_by(f'{order_prefix}{sort_by}')
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -198,6 +226,10 @@ class ThesisListView(LoginRequiredMixin, ListView):
         context['selected_phases'] = selected_phases
         context['current_type'] = self.request.GET.get('type', '')
         context['search_query'] = self.request.GET.get('search', '')
+
+        # Add sorting parameters for template
+        context['current_sort'] = self.request.GET.get('sort', 'date_first_contact')
+        context['current_order'] = self.request.GET.get('order', 'asc')
 
         # Calculate supervisor overview statistics
         # This creates a summary of how many theses each supervisor has in each phase

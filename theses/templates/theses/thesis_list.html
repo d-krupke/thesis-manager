@@ -168,22 +168,88 @@
             <table class="table table-sm table-hover">
                 <thead class="sticky-header">
                     <tr>
-                        <th>Type</th>
-                        <th>Title</th>
+                        <th>
+                            <a href="?sort=thesis_type&order={% if current_sort == 'thesis_type' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Type
+                                {% if current_sort == 'thesis_type' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=title&order={% if current_sort == 'title' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Title
+                                {% if current_sort == 'title' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th>Student(s)</th>
                         <th>Supervisor(s)</th>
-                        <th>Phase</th>
-                        <th>First Contact</th>
-                        <th>Registration</th>
-                        <th>Deadline</th>
-                        <th>Presentation</th>
+                        <th>
+                            <a href="?sort=phase&order={% if current_sort == 'phase' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Phase
+                                {% if current_sort == 'phase' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=date_first_contact&order={% if current_sort == 'date_first_contact' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                First Contact
+                                {% if current_sort == 'date_first_contact' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=date_registration&order={% if current_sort == 'date_registration' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Registration
+                                {% if current_sort == 'date_registration' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=date_deadline&order={% if current_sort == 'date_deadline' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Deadline
+                                {% if current_sort == 'date_deadline' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=date_presentation&order={% if current_sort == 'date_presentation' and current_order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% for phase in selected_phases %}&phase={{ phase }}{% endfor %}{% if current_type %}&type={{ current_type }}{% endif %}"
+                               class="text-decoration-none text-dark">
+                                Presentation
+                                {% if current_sort == 'date_presentation' %}
+                                    <i class="bi bi-{% if current_order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for thesis in theses %}
                     <tr>
-                        <td><span class="badge bg-primary">{{ thesis.get_thesis_type_display }}</span></td>
+                        <td>
+                            <span class="badge
+                                {% if thesis.thesis_type == 'bachelor' %}bg-info
+                                {% elif thesis.thesis_type == 'master' %}bg-danger
+                                {% elif thesis.thesis_type == 'project' %}bg-success
+                                {% elif thesis.thesis_type == 'other' %}bg-secondary
+                                {% else %}bg-primary
+                                {% endif %}">
+                                {{ thesis.get_thesis_type_display }}
+                            </span>
+                        </td>
                         <td>
                             <a href="{% url 'thesis_detail' thesis.pk %}">
                                 {{ thesis.title|default:"(No title yet)" }}
