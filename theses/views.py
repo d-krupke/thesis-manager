@@ -606,17 +606,29 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'password_reset_timeout_hours': timeout_hours,
         }
 
-        # Render plain text message (required fallback)
-        text_message = render_to_string('registration/new_user_email.html', context)
+        # Render plain text version (fallback for email clients that don't support HTML)
+        text_message = render_to_string('registration/new_user_email.txt', context)
+
+        # Render HTML version
+        try:
+            html_message = render_to_string('registration/new_user_email.html', context)
+        except:
+            # If HTML template fails, just send plain text
+            html_message = None
 
         # Send the email using EmailMultiAlternatives (consistent with signals.py)
         try:
             email = EmailMultiAlternatives(
                 subject=subject,
-                body=text_message,
+                body=text_message,  # Plain text version (fallback)
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[user.email],
             )
+
+            # Attach HTML version if available
+            if html_message:
+                email.attach_alternative(html_message, "text/html")
+
             email.send(fail_silently=False)
 
             messages.success(

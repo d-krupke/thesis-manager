@@ -1,17 +1,127 @@
-Hello {{ user.first_name }} {{ user.last_name }},
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* University Color Scheme - CMYK 10-100-80-0 = #E60033 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 3px solid #E60033;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            margin: 0;
+            color: #E60033;
+            font-size: 20px;
+        }
+        .welcome-message {
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #E60033;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 8px 0;
+        }
+        .info-box strong {
+            color: #E60033;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn-primary {
+            display: inline-block;
+            background-color: #E60033;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .btn-primary:hover {
+            background-color: #B8002A;
+        }
+        .expiry-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 20px 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>Welcome to Thesis Manager</h2>
+        </div>
 
-Welcome to Thesis Manager! An account has been created for you by {{ created_by.get_full_name|default:created_by.username }}.
+        <div class="welcome-message">
+            <p>Hello <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+            <p>An account has been created for you on Thesis Manager by <strong>{{ created_by.get_full_name|default:created_by.username }}</strong>.</p>
+        </div>
 
-Your username is: {{ user.username }}
+        <div class="info-box">
+            <p><strong>Your username:</strong> {{ user.username }}</p>
+            <p><strong>Your email:</strong> {{ user.email }}</p>
+        </div>
 
-To set your password and activate your account, please click the link below:
-{{ reset_url }}
+        <p>To activate your account, you need to set your password. Click the button below to get started:</p>
 
-This link will expire in {{ password_reset_timeout_hours }} hours for security reasons.
+        <div class="button-container">
+            <a href="{{ reset_url }}" class="btn-primary">Set My Password</a>
+        </div>
 
-Once you've set your password, you'll be able to log in to Thesis Manager and start using the system.
+        <p style="text-align: center; color: #6c757d; font-size: 14px;">
+            Or copy and paste this link into your browser:<br>
+            <a href="{{ reset_url }}" style="color: #E60033; word-break: break-all;">{{ reset_url }}</a>
+        </p>
 
-If you have any questions, please contact your administrator.
+        <div class="expiry-notice">
+            <strong>⏰ Important:</strong> This password setup link will expire in <strong>{{ password_reset_timeout_hours }} hours</strong> for security reasons.
+        </div>
 
---
-Thesis Manager
+        <p>Once you've set your password, you'll be able to log in to Thesis Manager and start using the system.</p>
+
+        <p>If you have any questions, please contact your administrator.</p>
+
+        <div class="footer">
+            <p>This is an automated email from Thesis Manager.<br>
+            Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
