@@ -627,6 +627,84 @@ def export_theses_csv(request):
         else:
             queryset = queryset.order_by(f'{order_prefix}{sort_by}')
 
+    # Get selected columns from request (default to all if not specified)
+    selected_columns = request.GET.getlist('columns')
+
+    # Define all available columns with their headers and data getters
+    all_columns = {
+        'type': {
+            'header': 'Type',
+            'getter': lambda t: t.get_thesis_type_display()
+        },
+        'title': {
+            'header': 'Title',
+            'getter': lambda t: t.title or '(No title yet)'
+        },
+        'phase': {
+            'header': 'Phase',
+            'getter': lambda t: t.get_phase_display()
+        },
+        'students': {
+            'header': 'Students',
+            'getter': lambda t: ', '.join([str(s) for s in t.students.all()]) or '-'
+        },
+        'supervisors': {
+            'header': 'Supervisors',
+            'getter': lambda t: ', '.join([str(s) for s in t.supervisors.all()]) or '-'
+        },
+        'date_first_contact': {
+            'header': 'First Contact',
+            'getter': lambda t: t.date_first_contact.strftime('%Y-%m-%d') if t.date_first_contact else ''
+        },
+        'date_topic_selected': {
+            'header': 'Topic Selected',
+            'getter': lambda t: t.date_topic_selected.strftime('%Y-%m-%d') if t.date_topic_selected else ''
+        },
+        'date_registration': {
+            'header': 'Registration',
+            'getter': lambda t: t.date_registration.strftime('%Y-%m-%d') if t.date_registration else ''
+        },
+        'date_deadline': {
+            'header': 'Deadline',
+            'getter': lambda t: t.date_deadline.strftime('%Y-%m-%d') if t.date_deadline else ''
+        },
+        'date_presentation': {
+            'header': 'Presentation',
+            'getter': lambda t: t.date_presentation.strftime('%Y-%m-%d') if t.date_presentation else ''
+        },
+        'date_review': {
+            'header': 'Review',
+            'getter': lambda t: t.date_review.strftime('%Y-%m-%d') if t.date_review else ''
+        },
+        'date_final_discussion': {
+            'header': 'Final Discussion',
+            'getter': lambda t: t.date_final_discussion.strftime('%Y-%m-%d') if t.date_final_discussion else ''
+        },
+        'git_repository': {
+            'header': 'Git Repository',
+            'getter': lambda t: t.git_repository or ''
+        },
+        'description': {
+            'header': 'Description',
+            'getter': lambda t: t.description or ''
+        },
+    }
+
+    # If no columns specified, use default set (most commonly used columns)
+    if not selected_columns:
+        selected_columns = [
+            'type', 'title', 'phase', 'students', 'supervisors',
+            'date_first_contact', 'date_registration', 'date_deadline',
+            'date_presentation', 'git_repository', 'description'
+        ]
+
+    # Filter to only valid column names
+    selected_columns = [col for col in selected_columns if col in all_columns]
+
+    # Ensure at least one column is selected
+    if not selected_columns:
+        selected_columns = ['title']
+
     # Create the HttpResponse with CSV content type and UTF-8 BOM for Excel
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
     response['Content-Disposition'] = 'attachment; filename="theses_export.csv"'
@@ -636,48 +714,13 @@ def export_theses_csv(request):
 
     writer = csv.writer(response)
 
-    # Write header row
-    writer.writerow([
-        'Type',
-        'Title',
-        'Phase',
-        'Students',
-        'Supervisors',
-        'First Contact',
-        'Topic Selected',
-        'Registration',
-        'Deadline',
-        'Presentation',
-        'Review',
-        'Final Discussion',
-        'Git Repository',
-        'Description',
-    ])
+    # Write header row with selected columns
+    writer.writerow([all_columns[col]['header'] for col in selected_columns])
 
-    # Write data rows
+    # Write data rows with selected columns
     for thesis in queryset:
-        # Format students as comma-separated names
-        students = ', '.join([str(student) for student in thesis.students.all()])
-
-        # Format supervisors as comma-separated names
-        supervisors = ', '.join([str(supervisor) for supervisor in thesis.supervisors.all()])
-
-        writer.writerow([
-            thesis.get_thesis_type_display(),
-            thesis.title or '(No title yet)',
-            thesis.get_phase_display(),
-            students or '-',
-            supervisors or '-',
-            thesis.date_first_contact.strftime('%Y-%m-%d') if thesis.date_first_contact else '',
-            thesis.date_topic_selected.strftime('%Y-%m-%d') if thesis.date_topic_selected else '',
-            thesis.date_registration.strftime('%Y-%m-%d') if thesis.date_registration else '',
-            thesis.date_deadline.strftime('%Y-%m-%d') if thesis.date_deadline else '',
-            thesis.date_presentation.strftime('%Y-%m-%d') if thesis.date_presentation else '',
-            thesis.date_review.strftime('%Y-%m-%d') if thesis.date_review else '',
-            thesis.date_final_discussion.strftime('%Y-%m-%d') if thesis.date_final_discussion else '',
-            thesis.git_repository or '',
-            thesis.description or '',
-        ])
+        row_data = [all_columns[col]['getter'](thesis) for col in selected_columns]
+        writer.writerow(row_data)
 
     return response
 
