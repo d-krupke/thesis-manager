@@ -66,15 +66,23 @@ class MyListView(LoginRequiredMixin, ListView):
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.db import models
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
 from knox.models import AuthToken
 from .models import Thesis, Student, Supervisor, Comment
-from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm
+from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm, UserCreationByAdminForm
 from .warnings import get_all_thesis_warnings
 
 
@@ -524,3 +532,88 @@ def api_tokens_delete_all(request):
     count = AuthToken.objects.filter(user=request.user).delete()[0]
     messages.success(request, f'Deleted {count} API token(s).')
     return redirect('api_tokens_list')
+
+
+# Admin User Creation View
+
+class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for admin users to create new user accounts.
+
+    This view:
+    1. Creates a new user with an unusable password
+    2. Sends a password reset email to the new user
+    3. Allows the user to set their own password via email link
+
+    This is much more convenient than:
+    - Creating user in admin interface
+    - Setting a temporary password
+    - Opening private tab to trigger "forgot password"
+    """
+    model = User
+    form_class = UserCreationByAdminForm
+    template_name = 'theses/user_create_form.html'
+    success_url = reverse_lazy('thesis_list')
+
+    def test_func(self):
+        """Only allow staff users to access this view"""
+        return self.request.user.is_staff
+
+    def form_valid(self, form):
+        """
+        Save the user and send password reset email.
+
+        This method is called when the form is valid. We:
+        1. Create the user with an unusable password (can't login yet)
+        2. Generate a password reset token
+        3. Send an email with the reset link
+        4. Show success message to admin
+        """
+        # Create the user but don't save yet
+        user = form.save(commit=False)
+        # Set an unusable password - user must use password reset link
+        user.set_unusable_password()
+        user.save()
+
+        # Generate password reset token (same as "forgot password" functionality)
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Get current site for building the reset URL
+        current_site = get_current_site(self.request)
+        protocol = 'https' if self.request.is_secure() else 'http'
+
+        # Build the password reset URL
+        reset_url = f"{protocol}://{current_site.domain}/accounts/reset/{uid}/{token}/"
+
+        # Prepare email content
+        subject = 'Welcome to Thesis Manager - Set Your Password'
+        message = render_to_string('registration/new_user_email.html', {
+            'user': user,
+            'reset_url': reset_url,
+            'created_by': self.request.user,
+        })
+
+        # Send the email
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            messages.success(
+                self.request,
+                f'User account created successfully for {user.get_full_name()} ({user.username}). '
+                f'A password reset email has been sent to {user.email}.'
+            )
+        except Exception as e:
+            # If email fails, still show success but warn about email issue
+            messages.warning(
+                self.request,
+                f'User account created for {user.get_full_name()} ({user.username}), '
+                f'but the password reset email could not be sent. Error: {str(e)}'
+            )
+
+        return super().form_valid(form)
