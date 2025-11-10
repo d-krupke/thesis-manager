@@ -70,6 +70,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
@@ -178,7 +179,6 @@ class ThesisListView(LoginRequiredMixin, ListView):
 
             # Handle NULL values: put them at the end
             # Use F() expression with nulls_last parameter
-            from django.db.models import F
             if sort_by.startswith('date_'):
                 # For date fields, ensure NULLs go to the end
                 queryset = queryset.order_by(
