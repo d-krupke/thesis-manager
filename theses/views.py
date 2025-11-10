@@ -81,7 +81,9 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from django.http import HttpResponse
 from knox.models import AuthToken
+import csv
 from .models import Thesis, Student, Supervisor, Comment
 from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm, UserCreationByAdminForm
 from .warnings import get_all_thesis_warnings
@@ -564,6 +566,120 @@ def api_tokens_delete_all(request):
     count = AuthToken.objects.filter(user=request.user).delete()[0]
     messages.success(request, f'Deleted {count} API token(s).')
     return redirect('api_tokens_list')
+
+
+# CSV Export View
+
+@login_required
+def export_theses_csv(request):
+    """
+    Export theses to CSV file with Excel compatibility.
+
+    This view respects all filters and sorting from the thesis list:
+    - Phase filters
+    - Type filters
+    - Search queries
+    - Sort order
+
+    The CSV includes UTF-8 BOM for proper Excel compatibility.
+    """
+    # Reuse the same filtering logic as ThesisListView
+    queryset = Thesis.objects.prefetch_related('students', 'supervisors').all()
+
+    # Apply phase filter
+    phases = request.GET.getlist('phase')
+    if phases:
+        queryset = queryset.filter(phase__in=phases)
+    else:
+        # Default: Exclude completed and abandoned phases
+        queryset = queryset.exclude(phase__in=['completed', 'abandoned'])
+
+    # Apply type filter
+    thesis_type = request.GET.get('type')
+    if thesis_type:
+        queryset = queryset.filter(thesis_type=thesis_type)
+
+    # Apply search filter
+    search = request.GET.get('search')
+    if search:
+        queryset = queryset.filter(
+            models.Q(title__icontains=search) |
+            models.Q(students__first_name__icontains=search) |
+            models.Q(students__last_name__icontains=search)
+        ).distinct()
+
+    # Apply sorting
+    sort_by = request.GET.get('sort', 'date_first_contact')
+    order = request.GET.get('order', 'asc')
+
+    allowed_sort_fields = [
+        'title', 'thesis_type', 'phase',
+        'date_first_contact', 'date_registration', 'date_deadline',
+        'date_presentation', 'date_review', 'date_final_discussion'
+    ]
+
+    if sort_by in allowed_sort_fields:
+        order_prefix = '-' if order == 'desc' else ''
+        if sort_by.startswith('date_'):
+            queryset = queryset.order_by(
+                F(sort_by).desc(nulls_last=True) if order == 'desc' else F(sort_by).asc(nulls_last=True)
+            )
+        else:
+            queryset = queryset.order_by(f'{order_prefix}{sort_by}')
+
+    # Create the HttpResponse with CSV content type and UTF-8 BOM for Excel
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="theses_export.csv"'
+
+    # UTF-8 BOM for Excel compatibility
+    response.write('\ufeff')
+
+    writer = csv.writer(response)
+
+    # Write header row
+    writer.writerow([
+        'Type',
+        'Title',
+        'Phase',
+        'Students',
+        'Supervisors',
+        'First Contact',
+        'Topic Selected',
+        'Registration',
+        'Deadline',
+        'Presentation',
+        'Review',
+        'Final Discussion',
+        'Git Repository',
+        'Description',
+    ])
+
+    # Write data rows
+    for thesis in queryset:
+        # Format students as comma-separated names
+        students = ', '.join([str(student) for student in thesis.students.all()])
+
+        # Format supervisors as comma-separated names
+        supervisors = ', '.join([str(supervisor) for supervisor in thesis.supervisors.all()])
+
+        writer.writerow([
+            thesis.get_thesis_type_display(),
+            thesis.title or '(No title yet)',
+            thesis.get_phase_display(),
+            students or '-',
+            supervisors or '-',
+            thesis.date_first_contact.strftime('%Y-%m-%d') if thesis.date_first_contact else '',
+            thesis.date_topic_selected.strftime('%Y-%m-%d') if thesis.date_topic_selected else '',
+            thesis.date_registration.strftime('%Y-%m-%d') if thesis.date_registration else '',
+            thesis.date_deadline.strftime('%Y-%m-%d') if thesis.date_deadline else '',
+            thesis.date_presentation.strftime('%Y-%m-%d') if thesis.date_presentation else '',
+            thesis.date_review.strftime('%Y-%m-%d') if thesis.date_review else '',
+            thesis.date_final_discussion.strftime('%Y-%m-%d') if thesis.date_final_discussion else '',
+            thesis.git_repository or '',
+            thesis.description or '',
+        ])
+
+    return response
 
 
 # Admin User Creation View
