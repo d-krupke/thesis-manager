@@ -61,6 +61,7 @@ class MyForm(forms.ModelForm):
 """
 
 from django import forms
+from django.contrib.auth.models import User
 from .models import Thesis, Student, Supervisor, Comment
 
 
@@ -171,3 +172,51 @@ class CommentForm(forms.ModelForm):
         labels = {
             'text': '',
         }
+
+
+class UserCreationByAdminForm(forms.ModelForm):
+    """
+    Form for admin users to create new user accounts.
+
+    Creates a user with an unusable password and triggers a password reset email.
+    This allows new users to set their own password via email link.
+    """
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Username for login'
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'First name'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Last name'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'user@example.com'
+            }),
+        }
+        help_texts = {
+            'username': 'Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.',
+            'email': 'Required. A password reset email will be sent to this address.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make email required (it's optional by default in User model)
+        self.fields['email'].required = True
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+
+    def clean_email(self):
+        """Ensure email is unique"""
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('A user with this email address already exists.')
+        return email
