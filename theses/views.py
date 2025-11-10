@@ -559,6 +559,14 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         """Only allow staff users to access this view"""
         return self.request.user.is_staff
 
+    def get_context_data(self, **kwargs):
+        """Add password reset timeout to context"""
+        context = super().get_context_data(**kwargs)
+        # Get PASSWORD_RESET_TIMEOUT from settings (default is 3 days = 259200 seconds)
+        timeout_seconds = getattr(settings, 'PASSWORD_RESET_TIMEOUT', 259200)
+        context['password_reset_timeout_hours'] = timeout_seconds // 3600
+        return context
+
     def form_valid(self, form):
         """
         Save the user and send password reset email.
@@ -588,10 +596,14 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
         # Prepare email content
         subject = 'Welcome to Thesis Manager - Set Your Password'
+        # Get PASSWORD_RESET_TIMEOUT from settings (default is 3 days = 259200 seconds)
+        timeout_seconds = getattr(settings, 'PASSWORD_RESET_TIMEOUT', 259200)
+        timeout_hours = timeout_seconds // 3600
         context = {
             'user': user,
             'reset_url': reset_url,
             'created_by': self.request.user,
+            'password_reset_timeout_hours': timeout_hours,
         }
 
         # Render plain text message (required fallback)
