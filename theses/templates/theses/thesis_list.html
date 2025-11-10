@@ -5,7 +5,84 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Thesis Overview</h1>
-    <a href="{% url 'thesis_create' %}" class="btn btn-primary">New Thesis</a>
+    <div>
+        <!-- Export with Column Selection -->
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-outline-secondary" id="exportButton">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
+                <h6 class="dropdown-header">Select Columns to Export</h6>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="type" id="col_type" checked>
+                    <label class="form-check-label" for="col_type">Type</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="title" id="col_title" checked>
+                    <label class="form-check-label" for="col_title">Title</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="phase" id="col_phase" checked>
+                    <label class="form-check-label" for="col_phase">Phase</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="students" id="col_students" checked>
+                    <label class="form-check-label" for="col_students">Students</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="supervisors" id="col_supervisors" checked>
+                    <label class="form-check-label" for="col_supervisors">Supervisors</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_first_contact" id="col_date_first_contact" checked>
+                    <label class="form-check-label" for="col_date_first_contact">First Contact</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_topic_selected" id="col_date_topic_selected">
+                    <label class="form-check-label" for="col_date_topic_selected">Topic Selected</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_registration" id="col_date_registration" checked>
+                    <label class="form-check-label" for="col_date_registration">Registration</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_deadline" id="col_date_deadline" checked>
+                    <label class="form-check-label" for="col_date_deadline">Deadline</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_presentation" id="col_date_presentation" checked>
+                    <label class="form-check-label" for="col_date_presentation">Presentation</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_review" id="col_date_review">
+                    <label class="form-check-label" for="col_date_review">Review</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="date_final_discussion" id="col_date_final_discussion">
+                    <label class="form-check-label" for="col_date_final_discussion">Final Discussion</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="git_repository" id="col_git_repository">
+                    <label class="form-check-label" for="col_git_repository">Git Repository</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input export-column" type="checkbox" value="description" id="col_description">
+                    <label class="form-check-label" for="col_description">Description</label>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllColumns">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="selectNoneColumns">Clear All</button>
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'thesis_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> New Thesis
+        </a>
+    </div>
 </div>
 
 <!-- Supervisor Overview -->
@@ -440,6 +517,68 @@
             cell.querySelector('.workload-badge').style.color = color;
             cell.querySelector('.workload-badge').style.fontWeight = 'bold';
             cell.querySelector('.workload-badge').style.fontSize = '1.1em';
+        });
+
+        // CSV Export with Column Selection
+        const exportButton = document.getElementById('exportButton');
+        const selectAllColumnsBtn = document.getElementById('selectAllColumns');
+        const selectNoneColumnsBtn = document.getElementById('selectNoneColumns');
+        const exportColumnCheckboxes = document.querySelectorAll('.export-column');
+
+        // Handle export button click
+        exportButton.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Get selected columns
+            const selectedColumns = Array.from(exportColumnCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            if (selectedColumns.length === 0) {
+                alert('Please select at least one column to export.');
+                return;
+            }
+
+            // Build export URL with filters and selected columns
+            const baseUrl = '{% url "export_theses_csv" %}';
+            const params = new URLSearchParams();
+
+            // Add filter parameters
+            {% if search_query %}
+            params.append('search', '{{ search_query|escapejs }}');
+            {% endif %}
+
+            {% for phase in selected_phases %}
+            params.append('phase', '{{ phase|escapejs }}');
+            {% endfor %}
+
+            {% if current_type %}
+            params.append('type', '{{ current_type|escapejs }}');
+            {% endif %}
+
+            {% if current_sort %}
+            params.append('sort', '{{ current_sort|escapejs }}');
+            {% endif %}
+
+            {% if current_order %}
+            params.append('order', '{{ current_order|escapejs }}');
+            {% endif %}
+
+            // Add selected columns
+            selectedColumns.forEach(col => params.append('columns', col));
+
+            // Navigate to export URL
+            window.location.href = baseUrl + '?' + params.toString();
+        });
+
+        // Select All columns button
+        selectAllColumnsBtn.addEventListener('click', function() {
+            exportColumnCheckboxes.forEach(cb => cb.checked = true);
+        });
+
+        // Clear All columns button
+        selectNoneColumnsBtn.addEventListener('click', function() {
+            exportColumnCheckboxes.forEach(cb => cb.checked = false);
         });
     });
 </script>

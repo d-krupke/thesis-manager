@@ -94,6 +94,9 @@ urlpatterns = [
     path('api-tokens/<str:token_id>/delete/', views.api_token_delete, name='api_token_delete'),
     path('api-tokens/delete-all/', views.api_tokens_delete_all, name='api_tokens_delete_all'),
 
+    # CSV Export URL
+    path('theses/export/', views.export_theses_csv, name='export_theses_csv'),
+
     # Admin User Management URLs
     path('users/create/', views.AdminCreateUserView.as_view(), name='admin_create_user'),
 ]
