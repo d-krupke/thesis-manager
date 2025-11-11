@@ -899,10 +899,10 @@ def feedback_request_create(request, thesis_pk):
 
                     # Render email templates
                     subject = f'Feedback Request for Thesis: {thesis.title or "Your Thesis"}'
-                    text_message = render_to_string('theses/emails/feedback_request.txt', context)
+                    text_message = render_to_string('emails/feedback_request.txt', context)
 
                     try:
-                        html_message = render_to_string('theses/emails/feedback_request.html', context)
+                        html_message = render_to_string('emails/feedback_request.html', context)
                     except:
                         html_message = None
 
@@ -1002,10 +1002,10 @@ def feedback_respond(request, token):
                     }
 
                     subject = f'Student Response Received for Thesis: {thesis.title or "Thesis"}'
-                    text_message = render_to_string('theses/emails/feedback_response_notification.txt', context)
+                    text_message = render_to_string('emails/feedback_response_notification.txt', context)
 
                     try:
-                        html_message = render_to_string('theses/emails/feedback_response_notification.html', context)
+                        html_message = render_to_string('emails/feedback_response_notification.html', context)
                     except:
                         html_message = None
 
