@@ -993,7 +993,7 @@ def feedback_request_create(request, thesis_pk):
                     except Exception:
                         html_message = None
 
-                    # Send email with supervisors as Reply-To
+                    # Send email with supervisor Reply-To
                     try:
                         email = EmailMultiAlternatives(
                             subject=subject,
