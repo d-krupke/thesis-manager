@@ -990,7 +990,7 @@ def feedback_request_create(request, thesis_pk):
 
                     try:
                         html_message = render_to_string('emails/feedback_request.html', context)
-                    except:
+                    except Exception:
                         html_message = None
 
                     # Send email with supervisors in CC
@@ -1093,23 +1093,21 @@ def feedback_respond(request, token):
 
                     try:
                         html_message = render_to_string('emails/feedback_response_notification.html', context)
-                    except:
+                    except Exception:
                         html_message = None
 
-                    try:
-                        email = EmailMultiAlternatives(
-                            subject=subject,
-                            body=text_message,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=supervisor_emails,
-                        )
+                    # Send notification email (fail silently - response already saved)
+                    email = EmailMultiAlternatives(
+                        subject=subject,
+                        body=text_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=supervisor_emails,
+                    )
 
-                        if html_message:
-                            email.attach_alternative(html_message, "text/html")
+                    if html_message:
+                        email.attach_alternative(html_message, "text/html")
 
-                        email.send(fail_silently=True)
-                    except:
-                        pass  # Fail silently for email errors
+                    email.send(fail_silently=True)
 
             return render(request, 'theses/feedback_response_success.html', {
                 'thesis': thesis,
