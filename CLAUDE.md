@@ -68,9 +68,9 @@ docker-compose up --build
 - `urls.py`: Root URL routing (includes API routes, web routes, admin)
 
 **Django App**: `theses/` - Main application logic
-- `models.py`: Database schema (Student, Supervisor, Thesis, Comment)
-- `views.py`: Web interface views (HTML responses)
-- `forms.py`: Web forms for creating/editing objects
+- `models.py`: Database schema (Student, Supervisor, Thesis, Comment, FeedbackTemplate, FeedbackRequest)
+- `views.py`: Web interface views (HTML responses) including feedback request system
+- `forms.py`: Web forms for creating/editing objects and feedback requests
 - `signals.py`: Automatic actions on model changes (auto-comments, email notifications)
 - `warnings.py`: Warning system for thesis deadlines and issues
 - `admin.py`: Django admin interface configuration
@@ -112,10 +112,29 @@ Generates warnings for theses that need attention:
 
 The `ThesisListView` displays warnings prominently in the web interface.
 
-#### 4. Many-to-Many Relationships
+#### 4. Student Feedback Request System
+**Location**: `views.py` (feedback_request_create, feedback_respond)
+
+The application provides a secure token-based system for requesting feedback from students:
+1. Supervisors create feedback requests using templates or custom messages
+2. System generates unique 48-byte URL-safe tokens using `secrets.token_urlsafe(48)`
+3. Students receive email with secure link (no login required)
+4. Students submit feedback which is saved as a special comment
+5. Supervisors receive email notification when feedback is submitted
+6. Students can update their response using the same link
+
+**Important Security Features**:
+- Tokens are cryptographically secure (48 bytes)
+- Each FeedbackRequest has a OneToOne relationship with a Comment
+- Write-protected templates cannot be edited (enforced in views)
+- No authentication required for student response (token-based access only)
+
+#### 5. Many-to-Many Relationships
 - **Thesis ↔ Student**: Many-to-Many (rare cases of multiple students per thesis)
 - **Thesis ↔ Supervisor**: Many-to-Many (allows backup supervisors)
 - **Thesis → Comment**: One-to-Many with ForeignKey
+- **Thesis → FeedbackRequest**: One-to-Many with ForeignKey
+- **FeedbackRequest ↔ Comment**: One-to-One (each feedback request creates a special comment)
 
 Access relationships via:
 - `thesis.students.all()`, `thesis.supervisors.all()`, `thesis.comments.all()`
@@ -133,6 +152,9 @@ Access relationships via:
 - `/api/comments/` - Comment management
 - `/api/theses/{id}/comments/` - Get comments for a thesis
 - `/api/theses/{id}/add_comment/` - Add comment to a thesis
+- `/api/feedback-templates/` - Manage feedback request templates
+- `/api/feedback-requests/` - View feedback requests (read-only)
+- `/api/theses/{id}/request_feedback/` - Send feedback request to students (POST)
 
 **Permissions**:
 - All API endpoints require authentication
@@ -163,13 +185,36 @@ Access relationships via:
 - text, is_auto_generated (bool)
 - created_at, updated_at
 
+**FeedbackTemplate**:
+- name, message, description
+- is_active (bool), is_write_protected (bool)
+- created_at, updated_at
+
+**FeedbackRequest**:
+- thesis (FK), comment (OneToOneField), requested_by (FK to User)
+- request_message, token (unique, 64 char)
+- is_responded (bool), first_response_at (datetime, nullable)
+- created_at, updated_at
+- Automatically generates secure token on save using `secrets.token_urlsafe(48)`
+
 ### Email Notification System
 
 **Configuration**: Set email backend and SMTP settings in `.env`
-**Triggered by**: `post_save` signal on Comment model (in `signals.py`)
-**Recipients**: All supervisors of the thesis (filtered by valid email addresses)
-**Content**: Notifies about new comments (both manual and auto-generated)
-**Graceful degradation**: Uses `fail_silently=True` so app continues if email fails
+
+**Comment Notifications**:
+- **Triggered by**: `post_save` signal on Comment model (in `signals.py`)
+- **Recipients**: All supervisors of the thesis (filtered by valid email addresses)
+- **Content**: Notifies about new comments (both manual and auto-generated)
+- **Graceful degradation**: Uses `fail_silently=True` so app continues if email fails
+
+**Feedback Request Emails**:
+- **Triggered by**: `feedback_request_create` view when creating FeedbackRequest
+- **Recipients**: All students associated with the thesis + supervisors (CC)
+- **Content**: Contains secure token-based link for student response
+- **Templates**: Both plain text (`feedback_request.txt`) and HTML (`feedback_request.html`)
+- **Response Notifications**: Supervisors notified on first student response only
+
+**Important**: All email templates are in `theses/templates/emails/` directory
 
 ## Making Changes
 
@@ -248,10 +293,17 @@ The application supports deployment behind nginx reverse proxy with HTTPS:
 
 - Static files collected to `staticfiles/` directory
 - Nginx serves static files directly (defined in `nginx.conf`)
+- **All frontend assets included in repository** (no external CDN dependencies):
+  - Bootstrap 5 CSS/JS (`theses/static/css/bootstrap.min.css`, `theses/static/js/bootstrap.bundle.min.js`)
+  - Bootstrap Icons (`theses/static/css/bootstrap-icons.min.css`, `theses/static/fonts/bootstrap-icons.woff*`)
+  - Select2 library for enhanced dropdowns
+  - MIT License files included (`theses/static/BOOTSTRAP_ICONS_LICENSE`)
 - Run `collectstatic` after any static file changes:
   ```bash
   docker-compose exec web python manage.py collectstatic --noinput
   ```
+
+**Security Note**: Self-hosting all static assets prevents external requests that could leak information in data-sensitive environments.
 
 ### Template Context
 
