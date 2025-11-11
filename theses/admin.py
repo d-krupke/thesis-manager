@@ -313,10 +313,10 @@ class FeedbackRequestAdmin(admin.ModelAdmin):
     def student_link(self, obj):
         """
         Display the student access URL in the admin interface.
+        Shows relative path - admin users know their own domain.
         """
         from django.utils.html import format_html
         url = obj.get_student_url()
-        full_url = f"https://example.com{url}"  # Replace with actual domain in production
-        return format_html('<a href="{}" target="_blank">{}</a>', full_url, full_url)
+        return format_html('<a href="{}" target="_blank">{}</a>', url, url)
 
-    student_link.short_description = 'Student Access Link'
+    student_link.short_description = 'Student Access Link (Relative Path)'
