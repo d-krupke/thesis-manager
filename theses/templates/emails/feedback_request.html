@@ -80,49 +80,45 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <h2>📝 Feedback Request for Your Thesis</h2>
+            <h2>📝 Quick Update Request</h2>
         </div>
 
-        <p>Dear Student{% if thesis.students.all|length > 1 %}s{% endif %},</p>
+        <p>Hello {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},</p>
 
-        <p>{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.</p>
+        <p>I hope this message finds you well! I wanted to reach out to get an update on your thesis progress.</p>
 
-        <table class="info-table">
-            <tr>
-                <td>Thesis:</td>
-                <td><strong>{{ thesis.title|default:"Your Thesis" }}</strong></td>
-            </tr>
-            <tr>
-                <td>Type:</td>
-                <td>{{ thesis.get_thesis_type_display }}</td>
-            </tr>
-            <tr>
-                <td>Phase:</td>
-                <td>{{ thesis.get_phase_display }}</td>
-            </tr>
-        </table>
+        {% if thesis.title %}
+        <p><strong>Your thesis:</strong> {{ thesis.title }}</p>
+        {% else %}
+        <p><strong>Your {{ thesis.get_thesis_type_display|lower }} thesis</strong></p>
+        {% endif %}
 
         <div class="message-box">
-            <h3>Message from Your Supervisor:</h3>
             {{ request_message|markdown|safe }}
         </div>
 
-        <p><strong>Please provide your feedback by clicking the button below:</strong></p>
+        <p>I've set up a quick feedback form for you - just click the button below to share your update. You can edit your response anytime if you need to add more information later:</p>
 
         <div style="text-align: center;">
-            <a href="{{ feedback_url }}" class="cta-button">Provide Feedback</a>
+            <a href="{{ feedback_url }}" class="cta-button">Share Your Update</a>
         </div>
 
         <p style="font-size: 14px; color: #6c757d;">
-            <strong>Note:</strong> No login is required. This link is unique to you and this request.
-            You can edit your response at any time using the same link. Please keep it confidential.
+            💡 No login needed - this link is just for you, so please keep it private.
+        </p>
+
+        <p style="margin-top: 30px;">Looking forward to hearing from you!</p>
+
+        <p>
+            <strong>Best regards,</strong><br>
+            {{ requested_by.get_full_name|default:requested_by.username }}
+            {% if requested_by.email %}<br>
+            <a href="mailto:{{ requested_by.email }}" style="color: #E60033; text-decoration: none;">{{ requested_by.email }}</a>
+            {% endif %}
         </p>
 
         <div class="footer">
-            <p>This is an automated notification from Thesis Manager. Supervisor(s) are CC'd on this email
-            and will receive a notification when you submit your response.</p>
-            <p><strong>IMPORTANT:</strong> This email address is not monitored. Please do not reply to this email.
-            For questions about this request, please contact your supervisor directly.</p>
+            <p style="font-size: 11px;">P.S. You received this through our thesis management system. If you have any questions about this request, feel free to reach out to me directly.</p>
         </div>
     </div>
 </body>

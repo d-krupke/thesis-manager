@@ -1,28 +1,24 @@
-Feedback Request for Your Thesis
+Hello {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
 
-Dear Student{{ thesis.students.all|length|pluralize }},
+I hope this message finds you well! I wanted to reach out to get an update on your thesis progress.
 
-{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.
+{% if thesis.title %}Your thesis: {{ thesis.title }}{% else %}Your {{ thesis.get_thesis_type_display|lower }} thesis{% endif %}
 
-Thesis: {{ thesis.title|default:"Your Thesis" }}
-Type: {{ thesis.get_thesis_type_display }}
-Phase: {{ thesis.get_phase_display }}
-
-MESSAGE FROM YOUR SUPERVISOR:
----
 {{ request_message }}
----
 
-PLEASE RESPOND:
-Click the link below to provide your feedback. You can edit your response at any time using the same link.
+I've set up a quick feedback form for you - just click the link below to share your update. You can edit your response anytime if you need to add more information later:
 
 {{ feedback_url }}
 
-No login is required - this link is unique to you and this request. Please keep it confidential.
+No login needed - this link is just for you, so please keep it private.
+
+Looking forward to hearing from you!
+
+Best regards,
+{{ requested_by.get_full_name|default:requested_by.username }}
+{% if requested_by.email %}
+{{ requested_by.email }}
+{% endif %}
 
 ---
-This is an automated notification from Thesis Manager.
-Supervisor(s) are CC'd on this email and will receive a notification when you submit your response.
-
-IMPORTANT: This email address is not monitored. Please do not reply to this email.
-For questions about this request, please contact your supervisor directly.
+P.S. You received this through our thesis management system. If you have any questions about this request, feel free to reach out to me directly.
