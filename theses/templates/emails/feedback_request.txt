@@ -19,4 +19,4 @@ Best regards,
 {% endif %}
 
 ---
-The Thesis Manager is open source software for tracking student theses from first contact to grading.
+The Thesis Manager is open source software for tracking student theses from first contact to grading: https://github.com/d-krupke/thesis-manager
