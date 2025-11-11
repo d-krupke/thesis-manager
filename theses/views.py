@@ -985,7 +985,7 @@ def feedback_request_create(request, thesis_pk):
                     }
 
                     # Render email templates
-                    subject = f'Feedback Request for Thesis: {thesis.title or "Your Thesis"}'
+                    subject = 'Please enter your thesis progress into our system'
                     text_message = render_to_string('emails/feedback_request.txt', context)
 
                     try:
@@ -993,14 +993,14 @@ def feedback_request_create(request, thesis_pk):
                     except Exception:
                         html_message = None
 
-                    # Send email with supervisors in CC
+                    # Send email with supervisors as Reply-To
                     try:
                         email = EmailMultiAlternatives(
                             subject=subject,
                             body=text_message,
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             to=student_emails,
-                            cc=supervisor_emails,
+                            reply_to=supervisor_emails,
                         )
 
                         if html_message:

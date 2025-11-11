@@ -1,18 +1,16 @@
-Hello {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
+Dear {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
 
-I hope this message finds you well! I wanted to reach out to get an update on your thesis progress.
+Please take a few minutes to enter your progress using our template below. Following these templates does not only help us get a more organized overview of all our students, allowing us to better respond to your needs, but they are also designed to help you reflect on your progress. Your entries will be automatically logged in our system and forwarded to us. We recommend that you also keep your own log of these entries.
 
-{% if thesis.title %}Your thesis: {{ thesis.title }}{% else %}Your {{ thesis.get_thesis_type_display|lower }} thesis{% endif %}
+The template looks as follows. You can freely edit it and replace or remove questions if you don't find them relevant (unless we explicitly asked you not to). Don't overthink it—just be honest. This will not be graded.
 
+---
 {{ request_message }}
+---
 
-I've set up a quick feedback form for you - just click the link below to share your update. You can edit your response anytime if you need to add more information later:
+Click the link below to enter your response. You can also use this link to edit your entry later if needed. We will be automatically notified when you submit or update your response.
 
 {{ feedback_url }}
-
-No login needed - this link is just for you, so please keep it private.
-
-Looking forward to hearing from you!
 
 Best regards,
 {{ requested_by.get_full_name|default:requested_by.username }}
@@ -21,4 +19,4 @@ Best regards,
 {% endif %}
 
 ---
-P.S. You received this through our thesis management system. If you have any questions about this request, feel free to reach out to me directly.
+The Thesis Manager is open source software for tracking student theses from first contact to grading.
