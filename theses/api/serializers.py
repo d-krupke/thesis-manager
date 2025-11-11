@@ -58,7 +58,8 @@ class MySerializer(serializers.ModelSerializer):
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from theses.models import Student, Supervisor, Thesis, Comment
+from theses.models import Student, Supervisor, Thesis, Comment, FeedbackTemplate, FeedbackRequest
+from theses import models
 
 
 class UserSerializer(serializers.ModelSerializer):

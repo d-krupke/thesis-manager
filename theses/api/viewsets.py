@@ -77,16 +77,19 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
-from theses.models import Student, Supervisor, Thesis, Comment
+from theses.models import Student, Supervisor, Thesis, Comment, FeedbackTemplate, FeedbackRequest
+from theses import models
 from .serializers import (
     StudentSerializer, StudentListSerializer,
     SupervisorSerializer, SupervisorListSerializer,
     ThesisSerializer, ThesisListSerializer, ThesisCreateUpdateSerializer,
-    CommentSerializer
+    CommentSerializer,
+    FeedbackTemplateSerializer, FeedbackRequestSerializer, FeedbackRequestCreateSerializer
 )
 from .permissions import IsStaffOrReadOnly, IsSupervisorOrReadOnly, IsOwnerOrReadOnly
 
