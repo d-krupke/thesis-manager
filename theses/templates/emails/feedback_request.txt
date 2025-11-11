@@ -1,28 +1,22 @@
-Feedback Request for Your Thesis
+Dear {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
 
-Dear Student{{ thesis.students.all|length|pluralize }},
+Please take a few minutes to enter your progress using our template below. Following these templates does not only help us get a more organized overview of all our students, allowing us to better respond to your needs, but they are also designed to help you reflect on your progress. Your entries will be automatically logged in our system and forwarded to us. We recommend that you also keep your own log of these entries.
 
-{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.
+The template looks as follows. You can freely edit it and replace or remove questions if you don't find them relevant (unless we explicitly asked you not to). Don't overthink it—just be honest. This will not be graded.
 
-Thesis: {{ thesis.title|default:"Your Thesis" }}
-Type: {{ thesis.get_thesis_type_display }}
-Phase: {{ thesis.get_phase_display }}
-
-MESSAGE FROM YOUR SUPERVISOR:
 ---
 {{ request_message }}
 ---
 
-PLEASE RESPOND:
-Click the link below to provide your feedback. You can edit your response at any time using the same link.
+Click the link below to enter your response. You can also use this link to edit your entry later if needed. We will be automatically notified when you submit or update your response.
 
 {{ feedback_url }}
 
-No login is required - this link is unique to you and this request. Please keep it confidential.
+Best regards,
+{{ requested_by.get_full_name|default:requested_by.username }}
+{% if requested_by.email %}
+{{ requested_by.email }}
+{% endif %}
 
 ---
-This is an automated notification from Thesis Manager.
-Supervisor(s) are CC'd on this email and will receive a notification when you submit your response.
-
-IMPORTANT: This email address is not monitored. Please do not reply to this email.
-For questions about this request, please contact your supervisor directly.
+The Thesis Manager is open source software for tracking student theses from first contact to grading: https://github.com/d-krupke/thesis-manager

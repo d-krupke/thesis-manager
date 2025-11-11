@@ -29,41 +29,28 @@
             color: #E60033;
             font-size: 20px;
         }
-        .info-table {
-            width: 100%;
-            margin: 20px 0;
-            border-collapse: collapse;
-        }
-        .info-table td {
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .info-table td:first-child {
-            font-weight: 600;
-            color: #6c757d;
-            width: 120px;
-        }
-        .message-box {
-            background-color: #FFE6ED;
+        .template-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-left: 4px solid #E60033;
-            padding: 15px 20px;
-            margin: 20px 0;
+            padding: 20px;
+            margin: 25px 0;
             border-radius: 4px;
         }
-        .message-box h3 {
-            margin-top: 0;
-            color: #E60033;
-            font-size: 16px;
+        .template-separator {
+            border-top: 2px dashed #dee2e6;
+            margin: 15px 0;
+            padding-top: 15px;
         }
         .cta-button {
             display: inline-block;
             background-color: #E60033;
             color: #ffffff;
-            padding: 12px 30px;
+            padding: 14px 35px;
             text-decoration: none;
             border-radius: 5px;
             font-weight: 600;
-            margin: 20px 0;
+            margin: 25px 0;
         }
         .cta-button:hover {
             background-color: #CC002E;
@@ -72,57 +59,52 @@
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #e9ecef;
-            font-size: 12px;
+            font-size: 11px;
             color: #6c757d;
+            text-align: center;
+        }
+        .signature {
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h2>📝 Feedback Request for Your Thesis</h2>
+            <h2>Thesis Progress Update</h2>
         </div>
 
-        <p>Dear Student{% if thesis.students.all|length > 1 %}s{% endif %},</p>
+        <p>Dear {% for student in thesis.students.all %}{{ student.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},</p>
 
-        <p>{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.</p>
+        <p>Please take a few minutes to enter your progress using our template below. Following these templates does not only help us get a more organized overview of all our students, allowing us to better respond to your needs, but they are also designed to help you reflect on your progress. Your entries will be automatically logged in our system and forwarded to us. We recommend that you also keep your own log of these entries.</p>
 
-        <table class="info-table">
-            <tr>
-                <td>Thesis:</td>
-                <td><strong>{{ thesis.title|default:"Your Thesis" }}</strong></td>
-            </tr>
-            <tr>
-                <td>Type:</td>
-                <td>{{ thesis.get_thesis_type_display }}</td>
-            </tr>
-            <tr>
-                <td>Phase:</td>
-                <td>{{ thesis.get_phase_display }}</td>
-            </tr>
-        </table>
+        <p>The template looks as follows. You can freely edit it and replace or remove questions if you don't find them relevant (unless we explicitly asked you not to). <strong>Don't overthink it—just be honest. This will not be graded.</strong></p>
 
-        <div class="message-box">
-            <h3>Message from Your Supervisor:</h3>
-            {{ request_message|markdown|safe }}
+        <div class="template-box">
+            <div class="template-separator">
+                {{ request_message|markdown|safe }}
+            </div>
         </div>
 
-        <p><strong>Please provide your feedback by clicking the button below:</strong></p>
+        <p>Click the link below to enter your response. You can also use this link to edit your entry later if needed. We will be automatically notified when you submit or update your response.</p>
 
         <div style="text-align: center;">
-            <a href="{{ feedback_url }}" class="cta-button">Provide Feedback</a>
+            <a href="{{ feedback_url }}" class="cta-button">Enter Your Response</a>
         </div>
 
-        <p style="font-size: 14px; color: #6c757d;">
-            <strong>Note:</strong> No login is required. This link is unique to you and this request.
-            You can edit your response at any time using the same link. Please keep it confidential.
-        </p>
+        <div class="signature">
+            <p>
+                <strong>Best regards,</strong><br>
+                {{ requested_by.get_full_name|default:requested_by.username }}
+                {% if requested_by.email %}<br>
+                <a href="mailto:{{ requested_by.email }}" style="color: #E60033; text-decoration: none;">{{ requested_by.email }}</a>
+                {% endif %}
+            </p>
+        </div>
 
         <div class="footer">
-            <p>This is an automated notification from Thesis Manager. Supervisor(s) are CC'd on this email
-            and will receive a notification when you submit your response.</p>
-            <p><strong>IMPORTANT:</strong> This email address is not monitored. Please do not reply to this email.
-            For questions about this request, please contact your supervisor directly.</p>
+            <p>The Thesis Manager is open source software for tracking student theses from first contact to grading:<br>
+            <a href="https://github.com/d-krupke/thesis-manager" style="color: #E60033; text-decoration: none;">https://github.com/d-krupke/thesis-manager</a></p>
         </div>
     </div>
 </body>
