@@ -85,7 +85,7 @@
 
         <p>Dear Student{% if thesis.students.all|length > 1 %}s{% endif %},</p>
 
-        <p>{{ requested_by.get_full_name }} has requested your feedback on your thesis.</p>
+        <p>{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.</p>
 
         <table class="info-table">
             <tr>

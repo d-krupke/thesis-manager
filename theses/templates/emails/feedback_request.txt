@@ -2,7 +2,7 @@ Feedback Request for Your Thesis
 
 Dear Student{{ thesis.students.all|length|pluralize }},
 
-{{ requested_by.get_full_name }} has requested your feedback on your thesis.
+{{ requested_by.get_full_name|default:requested_by.username }} has requested your feedback on your thesis.
 
 Thesis: {{ thesis.title|default:"Your Thesis" }}
 Type: {{ thesis.get_thesis_type_display }}
