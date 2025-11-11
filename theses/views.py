@@ -84,9 +84,10 @@ from django.conf import settings
 from django.http import HttpResponse
 from knox.models import AuthToken
 import csv
-from .models import Thesis, Student, Supervisor, Comment
-from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm, UserCreationByAdminForm
+from .models import Thesis, Student, Supervisor, Comment, FeedbackTemplate, FeedbackRequest
+from .forms import ThesisForm, StudentForm, SupervisorForm, CommentForm, UserCreationByAdminForm, FeedbackRequestForm, FeedbackResponseForm
 from .warnings import get_all_thesis_warnings
+from django.utils import timezone
 
 
 class ThesisListView(LoginRequiredMixin, ListView):
@@ -290,7 +291,12 @@ class ThesisDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'thesis'
 
     def get_queryset(self):
-        return Thesis.objects.prefetch_related('students', 'supervisors', 'comments__user')
+        return Thesis.objects.prefetch_related(
+            'students',
+            'supervisors',
+            'comments__user',
+            'comments__feedback_request__requested_by'
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -836,3 +842,292 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             )
 
         return super().form_valid(form)
+
+
+# ============================
+# FEEDBACK TEMPLATE CRUD VIEWS
+# ============================
+
+class FeedbackTemplateListView(LoginRequiredMixin, ListView):
+    """
+    List view for feedback templates.
+
+    Shows all active templates with options to create, edit, and delete.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_list.html'
+    context_object_name = 'templates'
+    paginate_by = 50
+
+    def get_queryset(self):
+        return FeedbackTemplate.objects.all().order_by('-created_at')
+
+
+class FeedbackTemplateCreateView(LoginRequiredMixin, CreateView):
+    """
+    Create view for feedback templates.
+
+    Allows any logged-in user to create a new template.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_form.html'
+    fields = ['name', 'message', 'description', 'is_active']
+    success_url = reverse_lazy('feedback_template_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Template "{form.instance.name}" created successfully.')
+        return super().form_valid(form)
+
+
+class FeedbackTemplateUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Update view for feedback templates.
+
+    Prevents editing of write-protected templates.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_form.html'
+    fields = ['name', 'message', 'description', 'is_active']
+    success_url = reverse_lazy('feedback_template_list')
+
+    def test_func(self):
+        """Prevent editing of write-protected templates"""
+        template = self.get_object()
+        return not template.is_write_protected
+
+    def handle_no_permission(self):
+        """Show message when trying to edit write-protected template"""
+        messages.error(self.request, 'This template is write-protected and cannot be edited.')
+        return redirect('feedback_template_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Template "{form.instance.name}" updated successfully.')
+        return super().form_valid(form)
+
+
+class FeedbackTemplateDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    Delete view for feedback templates.
+
+    Prevents deletion of write-protected templates.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_confirm_delete.html'
+    success_url = reverse_lazy('feedback_template_list')
+
+    def test_func(self):
+        """Prevent deletion of write-protected templates"""
+        template = self.get_object()
+        return not template.is_write_protected
+
+    def handle_no_permission(self):
+        """Show message when trying to delete write-protected template"""
+        messages.error(self.request, 'This template is write-protected and cannot be deleted.')
+        return redirect('feedback_template_list')
+
+    def delete(self, request, *args, **kwargs):
+        template_name = self.get_object().name
+        messages.success(request, f'Template "{template_name}" deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+# =======================
+# FEEDBACK REQUEST VIEWS
+# =======================
+
+@login_required
+def feedback_request_create(request, thesis_pk):
+    """
+    View for supervisors to create a feedback request for a thesis.
+
+    Shows a form where supervisors can select a template and customize
+    the feedback request message before sending it to students.
+    """
+    thesis = get_object_or_404(Thesis.objects.prefetch_related('students', 'supervisors'), pk=thesis_pk)
+
+    if request.method == 'POST':
+        form = FeedbackRequestForm(request.POST)
+        if form.is_valid():
+            # Create a comment to store the feedback request and response
+            comment = Comment.objects.create(
+                thesis=thesis,
+                user=None,  # No user initially (will be student's response)
+                text="[Awaiting student feedback]\n\n---\n\n**Request:**\n" + form.cleaned_data['message'],
+                is_auto_generated=False
+            )
+
+            # Create the feedback request
+            feedback_request = FeedbackRequest.objects.create(
+                thesis=thesis,
+                comment=comment,
+                request_message=form.cleaned_data['message'],
+                requested_by=request.user
+            )
+
+            # Send email to students with the feedback request link
+            students = thesis.students.all()
+            if students:
+                student_emails = [s.email for s in students if s.email]
+                supervisor_emails = [s.email for s in thesis.supervisors.all() if s.email]
+
+                if student_emails:
+                    # Get current site for building the URL
+                    current_site = get_current_site(request)
+                    protocol = 'https' if request.is_secure() else 'http'
+                    feedback_url = f"{protocol}://{current_site.domain}{feedback_request.get_student_url()}"
+
+                    # Prepare email context
+                    context = {
+                        'thesis': thesis,
+                        'request_message': form.cleaned_data['message'],
+                        'feedback_url': feedback_url,
+                        'requested_by': request.user,
+                    }
+
+                    # Render email templates
+                    subject = f'Feedback Request for Thesis: {thesis.title or "Your Thesis"}'
+                    text_message = render_to_string('emails/feedback_request.txt', context)
+
+                    try:
+                        html_message = render_to_string('emails/feedback_request.html', context)
+                    except Exception:
+                        html_message = None
+
+                    # Send email with supervisors in CC
+                    try:
+                        email = EmailMultiAlternatives(
+                            subject=subject,
+                            body=text_message,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=student_emails,
+                            cc=supervisor_emails,
+                        )
+
+                        if html_message:
+                            email.attach_alternative(html_message, "text/html")
+
+                        email.send(fail_silently=False)
+
+                        messages.success(
+                            request,
+                            f'Feedback request sent successfully to {", ".join([str(s) for s in students])}.'
+                        )
+                    except Exception as e:
+                        messages.warning(
+                            request,
+                            f'Feedback request created but email could not be sent. Error: {str(e)}'
+                        )
+                else:
+                    messages.warning(
+                        request,
+                        'Feedback request created but no valid student email addresses found.'
+                    )
+            else:
+                messages.warning(
+                    request,
+                    'Feedback request created but no students assigned to this thesis.'
+                )
+
+            return redirect('thesis_detail', pk=thesis.pk)
+    else:
+        form = FeedbackRequestForm()
+
+    context = {
+        'thesis': thesis,
+        'form': form,
+        'templates': FeedbackTemplate.objects.filter(is_active=True),
+    }
+
+    return render(request, 'theses/feedback_request_form.html', context)
+
+
+def feedback_respond(request, token):
+    """
+    Public view for students to respond to a feedback request.
+
+    This view does not require login - students access it via a secure token
+    link sent in the email.
+    """
+    feedback_request = get_object_or_404(
+        FeedbackRequest.objects.select_related('thesis', 'comment', 'requested_by'),
+        token=token
+    )
+
+    thesis = feedback_request.thesis
+    comment = feedback_request.comment
+
+    if request.method == 'POST':
+        form = FeedbackResponseForm(request.POST)
+        if form.is_valid():
+            # Check if this is the first response
+            is_first_response = not feedback_request.is_responded
+
+            # Update the comment with the student's response
+            comment.text = form.cleaned_data['response']
+            comment.save()
+
+            # Mark as responded if first time
+            if is_first_response:
+                feedback_request.is_responded = True
+                feedback_request.first_response_at = timezone.now()
+                feedback_request.save()
+
+                # Send email notification to supervisors
+                supervisor_emails = [s.email for s in thesis.supervisors.all() if s.email]
+
+                if supervisor_emails:
+                    # Get current site for building the thesis URL
+                    current_site = get_current_site(request)
+                    protocol = 'https' if request.is_secure() else 'http'
+                    thesis_url = f"{protocol}://{current_site.domain}{thesis.get_absolute_url()}"
+
+                    context = {
+                        'thesis': thesis,
+                        'feedback_request': feedback_request,
+                        'response': form.cleaned_data['response'],
+                        'thesis_url': thesis_url,
+                    }
+
+                    subject = f'Student Response Received for Thesis: {thesis.title or "Thesis"}'
+                    text_message = render_to_string('emails/feedback_response_notification.txt', context)
+
+                    try:
+                        html_message = render_to_string('emails/feedback_response_notification.html', context)
+                    except Exception:
+                        html_message = None
+
+                    # Send notification email (fail silently - response already saved)
+                    email = EmailMultiAlternatives(
+                        subject=subject,
+                        body=text_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=supervisor_emails,
+                    )
+
+                    if html_message:
+                        email.attach_alternative(html_message, "text/html")
+
+                    email.send(fail_silently=True)
+
+            return render(request, 'theses/feedback_response_success.html', {
+                'thesis': thesis,
+                'is_first_response': is_first_response,
+            })
+    else:
+        # Pre-fill form with existing response if any
+        initial_data = {}
+        if feedback_request.is_responded:
+            initial_data['response'] = comment.text
+        else:
+            # Show the request message as a starting point
+            initial_data['response'] = f"{feedback_request.request_message}"
+
+        form = FeedbackResponseForm(initial=initial_data)
+
+    context = {
+        'thesis': thesis,
+        'feedback_request': feedback_request,
+        'form': form,
+    }
+
+    return render(request, 'theses/feedback_response_form.html', context)

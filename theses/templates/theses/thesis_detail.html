@@ -270,8 +270,11 @@
 <div class="row">
     <div class="col-12">
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Comments</h5>
+                <a href="{% url 'feedback_request_create' thesis.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-envelope"></i> Request Feedback
+                </a>
             </div>
             <div class="card-body">
                 <!-- Add Comment Form -->
@@ -285,7 +288,7 @@
                 {% if comments %}
                     <div class="mt-4">
                         {% for comment in comments %}
-                        <div class="card mb-3 {% if comment.is_auto_generated %}bg-light{% endif %}">
+                        <div class="card mb-3 {% if comment.is_auto_generated %}bg-light{% elif comment.feedback_request %}border-success{% endif %}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
@@ -293,17 +296,32 @@
                                             {% if comment.user %}
                                                 {{ comment.user.get_full_name|default:comment.user.username }}
                                             {% else %}
-                                                System
+                                                {% if comment.feedback_request %}
+                                                    Student Feedback
+                                                {% else %}
+                                                    System
+                                                {% endif %}
                                             {% endif %}
                                         </strong>
                                         {% if comment.is_auto_generated %}
                                             <span class="badge bg-secondary ms-2">Auto</span>
+                                        {% endif %}
+                                        {% if comment.feedback_request %}
+                                            <span class="badge bg-success ms-2">
+                                                <i class="bi bi-chat-square-text"></i> Student Feedback
+                                            </span>
+                                            {% if not comment.feedback_request.is_responded %}
+                                                <span class="badge bg-warning text-dark ms-2">Pending</span>
+                                            {% endif %}
                                         {% endif %}
                                         <br>
                                         <small class="text-muted">
                                             {{ comment.created_at|date:"Y-m-d H:i" }}
                                             {% if comment.updated_at != comment.created_at %}
                                                 (edited {{ comment.updated_at|date:"Y-m-d H:i" }})
+                                            {% endif %}
+                                            {% if comment.feedback_request %}
+                                                <br>Requested by: {{ comment.feedback_request.requested_by.get_full_name|default:comment.feedback_request.requested_by.username }}
                                             {% endif %}
                                         </small>
                                     </div>

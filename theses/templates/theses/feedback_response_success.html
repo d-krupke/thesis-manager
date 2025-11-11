@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Submitted - Thesis Manager</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .success-container {
+            max-width: 700px;
+            margin: 50px auto;
+        }
+        .success-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 72px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #E60033;
+            border-color: #E60033;
+        }
+        .btn-primary:hover {
+            background-color: #CC002E;
+            border-color: #CC002E;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-card">
+            <div class="success-icon">✅</div>
+
+            <h1 class="mb-3">
+                {% if is_first_response %}
+                    Feedback Submitted Successfully!
+                {% else %}
+                    Response Updated Successfully!
+                {% endif %}
+            </h1>
+
+            <p class="lead mb-4">
+                Thank you for providing your feedback on your thesis progress.
+            </p>
+
+            {% if is_first_response %}
+            <div class="alert alert-info">
+                Your supervisor{% if thesis.supervisors.all|length > 1 %}s have{% else %} has{% endif %} been notified
+                and will review your response.
+            </div>
+            {% endif %}
+
+            <div class="mb-4">
+                <h5 class="text-muted">Thesis Information</h5>
+                <p class="mb-1"><strong>{{ thesis.title|default:"Your Thesis" }}</strong></p>
+                <p class="mb-0">{{ thesis.get_thesis_type_display }} - {{ thesis.get_phase_display }}</p>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="text-muted">
+                <p class="mb-2">
+                    <strong>What happens next?</strong>
+                </p>
+                <ul class="text-start" style="max-width: 500px; margin: 0 auto;">
+                    <li>Your response has been saved as a comment on your thesis</li>
+                    <li>Your supervisor can view it in the thesis management system</li>
+                    <li>You can return to this page using the link in your email to edit your response at any time</li>
+                    <li>Updates to your response will not send additional notifications</li>
+                </ul>
+            </div>
+
+            <div class="mt-4">
+                <p class="text-muted small">
+                    You can now close this window. Keep the link from your email if you need to update your response later.
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small">Thesis Manager - Feedback System</p>
+        </div>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

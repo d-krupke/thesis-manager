@@ -1,0 +1,24 @@
+Student Response Received
+
+Dear Supervisor{{ thesis.supervisors.all|length|pluralize }},
+
+A student has responded to your feedback request for the following thesis:
+
+Thesis: {{ thesis.title|default:"Thesis" }}
+Type: {{ thesis.get_thesis_type_display }}
+Phase: {{ thesis.get_phase_display }}
+Student(s): {% for student in thesis.students.all %}{{ student }}{% if not forloop.last %}, {% endif %}{% endfor %}
+
+STUDENT RESPONSE:
+---
+{{ response }}
+---
+
+You can view this response and all other comments in the thesis details:
+{{ thesis_url }}
+
+---
+This is an automated notification from Thesis Manager.
+You are receiving this email because you requested feedback for this thesis.
+
+IMPORTANT: This email address is not monitored. Please do not reply to this email.

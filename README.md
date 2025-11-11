@@ -36,6 +36,15 @@ Track all aspects of a thesis including timeline, people involved, repository li
   - User attribution and timestamps for all comments
   - Visual distinction between manual and auto-generated comments
   - Email notifications to supervisors when comments are added (optional)
+- **Student Feedback Request System**:
+  - Request feedback from students via email with customizable templates
+  - Template management UI for creating and editing feedback request templates
+  - Secure token-based student response system (no login required)
+  - Students can submit and update feedback responses via unique links
+  - Automatic email notifications to students and supervisors
+  - Feedback responses stored as special comments on thesis records
+  - API support for automated feedback requests
+  - Default templates included for common feedback scenarios
 - **User Management**:
   - Password change functionality for all users
   - Password reset via email (when email is configured)
@@ -46,6 +55,7 @@ Track all aspects of a thesis including timeline, people involved, repository li
   - Automatic OpenAPI/Swagger documentation
   - Support for filtering, search, and pagination
   - Multiple tokens per user for different applications
+  - Feedback template and request management via API
   - See [docs/api.md](docs/api.md) for complete documentation
 - **Git Repository Links**: Track student repository URLs
 - **Filtering & Search**: Filter by phase, thesis type, and search by title or student name
@@ -193,6 +203,7 @@ The system supports email notifications and password reset via email. Email conf
 
 1. **Password Reset**: Users can reset forgotten passwords via email
 2. **Comment Notifications**: Supervisors receive email notifications when comments are added to their theses
+3. **Feedback Requests**: Students receive email notifications with secure links to provide feedback on their thesis progress
 
 #### Setting Up Email
 
@@ -319,15 +330,44 @@ Theses go through these phases:
 9. **Completed**: All done
 10. **Abandoned**: Thesis was not completed
 
+### Requesting Student Feedback
+
+The feedback request system allows supervisors to request updates from students via email:
+
+1. **Navigate to a thesis** detail page
+2. **Click "Request Feedback"** button in the comments section
+3. **Choose a template** (or write a custom message):
+   - Weekly Status Update
+   - Monthly Progress Report
+   - Pre-Submission Check
+   - Post-Meeting Follow-Up
+   - Research Phase Update
+   - Implementation Status
+4. **Customize the message** if needed
+5. **Send the request**:
+   - Students receive an email with a secure link
+   - No login required - token-based access
+   - Students can submit and update their response
+   - Response is saved as a comment on the thesis
+   - Supervisors are notified when students respond
+
+#### Managing Templates
+
+1. Navigate to **Templates** in the navigation bar
+2. **Create new templates** or **edit existing ones**
+3. Templates can be marked as **write-protected** by administrators
+4. Active templates appear in the feedback request form
+
 ### Main Views
 
 - **Thesis List** (`/`): Overview table of all theses with filtering and search
-- **Thesis Detail** (`/thesis/<id>/`): Complete information about a thesis
+- **Thesis Detail** (`/thesis/<id>/`): Complete information about a thesis with "Request Feedback" button
 - **Student Detail** (`/student/<id>/`): Student information and their theses
 - **Student List** (`/students/`): Overview of all students
 - **Supervisor List** (`/supervisors/`): Overview of all supervisors
 - **Supervisor Detail** (`/supervisor/<id>/`): Supervisor information and supervised theses
-- **Edit Forms**: Update thesis, student, or supervisor information
+- **Feedback Templates** (`/templates/`): Manage feedback request templates
+- **Edit Forms**: Update thesis, student, supervisor, or template information
 
 ## API Access
 
@@ -357,6 +397,9 @@ The Thesis Manager provides a comprehensive REST API for programmatic access.
 - `/api/students/` - Manage students
 - `/api/supervisors/` - Manage supervisors
 - `/api/comments/` - Manage comments
+- `/api/feedback-templates/` - Manage feedback request templates
+- `/api/feedback-requests/` - View feedback requests
+- `/api/theses/<id>/request_feedback/` - Send feedback request to students (POST)
 
 For detailed API documentation, examples, and best practices, see **[docs/api.md](docs/api.md)**.
 
@@ -480,6 +523,8 @@ The deployment guide covers:
 - **Supervisor**: first_name, last_name, email, comments, created_at, updated_at
 - **Thesis**: title, thesis_type, phase, dates (7 different date fields), git_repository, description, created_at, updated_at, many-to-many relations with Student and Supervisor
 - **Comment**: thesis (ForeignKey), user (ForeignKey), text, is_auto_generated, created_at, updated_at
+- **FeedbackTemplate**: name, message, description, is_active, is_write_protected, created_at, updated_at
+- **FeedbackRequest**: thesis (ForeignKey), comment (OneToOneField), request_message, token (unique), requested_by (ForeignKey to User), is_responded, first_response_at, created_at, updated_at
 
 ### Relationships
 
@@ -487,6 +532,9 @@ The deployment guide covers:
 - Thesis ↔ Supervisor: Many-to-Many (backup supervisors)
 - Thesis → Comment: One-to-Many (each thesis can have multiple comments)
 - User → Comment: One-to-Many (each user can make multiple comments)
+- Thesis → FeedbackRequest: One-to-Many (each thesis can have multiple feedback requests)
+- FeedbackRequest ↔ Comment: One-to-One (each feedback request creates a special comment)
+- User → FeedbackRequest: One-to-Many (tracks who requested the feedback)
 
 ## Development
 
@@ -535,7 +583,23 @@ thesis-manager/
     │
     ├── migrations/             # Database migrations
     │   ├── 0001_initial.py
-    │   └── 0002_remove_thesis_comments_thesis_description_comment.py
+    │   ├── 0002_remove_thesis_comments_thesis_description_comment.py
+    │   ├── 0003_feedbacktemplate_feedbackrequest.py
+    │   ├── 0004_initial_feedback_templates.py
+    │   └── 0005_feedbacktemplate_is_write_protected.py
+    │
+    ├── static/                 # Static files (CSS, JS, fonts)
+    │   ├── css/
+    │   │   ├── bootstrap.min.css
+    │   │   ├── bootstrap-icons.min.css
+    │   │   └── select2-bootstrap-5-theme.min.css
+    │   ├── js/
+    │   │   ├── bootstrap.bundle.min.js
+    │   │   └── select2.min.js
+    │   ├── fonts/
+    │   │   ├── bootstrap-icons.woff
+    │   │   └── bootstrap-icons.woff2
+    │   └── BOOTSTRAP_ICONS_LICENSE
     │
     └── templates/              # HTML templates
         ├── base.html           # Base template with navigation
@@ -544,7 +608,11 @@ thesis-manager/
         │   ├── password_*.html
         │   └── ...
         ├── emails/             # Email templates
-        │   └── comment_notification.txt
+        │   ├── comment_notification.txt
+        │   ├── feedback_request.txt
+        │   ├── feedback_request.html
+        │   ├── feedback_response_notification.txt
+        │   └── feedback_response_notification.html
         └── theses/             # App-specific templates
             ├── thesis_list.html
             ├── thesis_detail.html
@@ -555,6 +623,12 @@ thesis-manager/
             ├── supervisor_list.html
             ├── supervisor_detail.html
             ├── supervisor_form.html
+            ├── feedback_template_list.html
+            ├── feedback_template_form.html
+            ├── feedback_template_confirm_delete.html
+            ├── feedback_request_form.html
+            ├── feedback_response_form.html
+            ├── feedback_response_success.html
             ├── api_tokens.html
             └── comment_edit.html
 ```
@@ -694,10 +768,10 @@ This project uses the following open-source dependencies:
 - [Gunicorn](https://gunicorn.org/) - MIT License
 - [psycopg2](https://www.psycopg.org/) - LGPL-3.0 with linking exceptions
 
-**Frontend Libraries:**
+**Frontend Libraries (included in repository):**
 - [Bootstrap 5](https://getbootstrap.com/) - MIT License
+- [Bootstrap Icons](https://icons.getbootstrap.com/) - MIT License (see `theses/static/BOOTSTRAP_ICONS_LICENSE`)
 - [jQuery](https://jquery.com/) - MIT License
 - [Select2](https://select2.org/) - MIT License
-- [Bootstrap Icons](https://icons.getbootstrap.com/) - MIT License
 
-All dependencies use permissive licenses compatible with the MIT License.
+All frontend assets are included in the repository to avoid external CDN dependencies, ensuring privacy and security in data-sensitive environments. All dependencies use permissive licenses compatible with the MIT License.
