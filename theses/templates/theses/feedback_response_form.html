@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provide Feedback - Thesis Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .feedback-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header-banner {
+            background: linear-gradient(135deg, #E60033 0%, #CC002E 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 0;
+        }
+        .content-card {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #E60033;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .request-message {
+            background-color: #FFF9E6;
+            border-left: 4px solid #FFC107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .request-message h5 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background-color: #E60033;
+            border-color: #E60033;
+        }
+        .btn-primary:hover {
+            background-color: #CC002E;
+            border-color: #CC002E;
+        }
+        .markdown-help {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="feedback-container">
+        <div class="header-banner">
+            <h1 class="mb-2">📝 Provide Your Feedback</h1>
+            <p class="mb-0">Your supervisor has requested feedback on your thesis progress</p>
+        </div>
+
+        <div class="content-card p-4">
+            <div class="info-box">
+                <h5 class="mb-3">Thesis Information</h5>
+                <p class="mb-1"><strong>Title:</strong> {{ thesis.title|default:"Your Thesis" }}</p>
+                <p class="mb-1"><strong>Type:</strong> {{ thesis.get_thesis_type_display }}</p>
+                <p class="mb-1"><strong>Phase:</strong> {{ thesis.get_phase_display }}</p>
+                <p class="mb-0"><strong>Requested by:</strong> {{ feedback_request.requested_by.get_full_name }}</p>
+            </div>
+
+            <div class="request-message">
+                <h5>Message from Your Supervisor:</h5>
+                <div>{{ feedback_request.request_message|linebreaks }}</div>
+            </div>
+
+            {% if feedback_request.is_responded %}
+            <div class="alert alert-success">
+                <strong>Note:</strong> You have already submitted a response. You can edit and update it below.
+                Your supervisor will not be notified of updates (only the initial submission sends a notification).
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.response.id_for_label }}" class="form-label">
+                        <strong>Your Response</strong>
+                    </label>
+                    {{ form.response }}
+                    {% if form.response.help_text %}
+                    <div class="form-text markdown-help">
+                        {{ form.response.help_text }}
+                        <br>
+                        <strong>Markdown tips:</strong> **bold**, *italic*, # Heading, - List item
+                    </div>
+                    {% endif %}
+                    {% if form.response.errors %}
+                    <div class="text-danger"><small>{{ form.response.errors }}</small></div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid gap-2 d-md-block">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        {% if feedback_request.is_responded %}
+                            💾 Update Response
+                        {% else %}
+                            📤 Submit Response
+                        {% endif %}
+                    </button>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <p class="text-muted small mb-0">
+                        <strong>Privacy notice:</strong> Your response will be visible to all supervisors of this thesis.
+                        The secure link you received allows you to edit your response at any time.
+                        Please keep the link confidential.
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small">Thesis Manager - Feedback System</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

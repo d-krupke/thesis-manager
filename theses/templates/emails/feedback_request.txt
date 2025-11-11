@@ -1,0 +1,28 @@
+Feedback Request for Your Thesis
+
+Dear Student{{ thesis.students.all|length|pluralize }},
+
+{{ requested_by.get_full_name }} has requested your feedback on your thesis.
+
+Thesis: {{ thesis.title|default:"Your Thesis" }}
+Type: {{ thesis.get_thesis_type_display }}
+Phase: {{ thesis.get_phase_display }}
+
+MESSAGE FROM YOUR SUPERVISOR:
+---
+{{ request_message }}
+---
+
+PLEASE RESPOND:
+Click the link below to provide your feedback. You can edit your response at any time using the same link.
+
+{{ feedback_url }}
+
+No login is required - this link is unique to you and this request. Please keep it confidential.
+
+---
+This is an automated notification from Thesis Manager.
+Supervisor(s) are CC'd on this email and will receive a notification when you submit your response.
+
+IMPORTANT: This email address is not monitored. Please do not reply to this email.
+For questions about this request, please contact your supervisor directly.

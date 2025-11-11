@@ -54,6 +54,7 @@ KEY MODEL METHODS:
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
+import secrets
 
 
 class Student(models.Model):
@@ -289,3 +290,67 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user} on {self.thesis} at {self.created_at}"
+
+
+class FeedbackTemplate(models.Model):
+    """
+    FeedbackTemplate model - stores reusable templates for feedback requests.
+
+    Supervisors can select and customize these templates when requesting
+    feedback from students.
+    """
+    name = models.CharField(max_length=200, help_text="Template name (e.g., 'Weekly Status Update')")
+    message = models.TextField(help_text="Template message text (supports Markdown)")
+    description = models.TextField(blank=True, help_text="Optional description of when to use this template")
+    is_active = models.BooleanField(default=True, help_text="Is this template available for use?")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class FeedbackRequest(models.Model):
+    """
+    FeedbackRequest model - tracks feedback requests sent to students.
+
+    When a supervisor requests feedback from students, this creates a special
+    comment that students can edit via a secure token link (without login).
+    """
+    thesis = models.ForeignKey(Thesis, on_delete=models.CASCADE, related_name='feedback_requests')
+    comment = models.OneToOneField(Comment, on_delete=models.CASCADE, related_name='feedback_request')
+
+    # The message/prompt sent to the student
+    request_message = models.TextField(help_text="The message/prompt sent to the student")
+
+    # Secure token for student access (no login required)
+    token = models.CharField(max_length=64, unique=True, editable=False)
+
+    # Track who requested and when
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='feedback_requests_sent')
+
+    # Track response status
+    is_responded = models.BooleanField(default=False, help_text="Has the student responded?")
+    first_response_at = models.DateTimeField(null=True, blank=True, help_text="When student first responded")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Feedback request for {self.thesis} by {self.requested_by}"
+
+    def save(self, *args, **kwargs):
+        """Generate secure token on creation"""
+        if not self.token:
+            self.token = secrets.token_urlsafe(48)
+        super().save(*args, **kwargs)
+
+    def get_student_url(self):
+        """Get the public URL for students to respond"""
+        return reverse('feedback_respond', kwargs={'token': self.token})

@@ -79,7 +79,7 @@ class MyModelAdmin(admin.ModelAdmin):
 """
 
 from django.contrib import admin
-from .models import Student, Supervisor, Thesis, Comment
+from .models import Student, Supervisor, Thesis, Comment, FeedbackTemplate, FeedbackRequest
 
 
 # @admin.register: Register this model with the admin interface
@@ -256,3 +256,67 @@ class CommentAdmin(admin.ModelAdmin):
         return obj.text[:50] + '...' if len(obj.text) > 50 else obj.text
 
     text_preview.short_description = 'Comment'
+
+
+@admin.register(FeedbackTemplate)
+class FeedbackTemplateAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for FeedbackTemplate model.
+
+    Allows managing reusable templates for feedback requests.
+    """
+    list_display = ['name', 'is_active', 'created_at', 'updated_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description', 'message']
+    ordering = ['name']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'is_active')
+        }),
+        ('Template Content', {
+            'fields': ('message', 'description')
+        }),
+    )
+
+
+@admin.register(FeedbackRequest)
+class FeedbackRequestAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for FeedbackRequest model.
+
+    Shows feedback requests with their status and links.
+    """
+    list_display = ['thesis', 'requested_by', 'is_responded', 'first_response_at', 'created_at']
+    list_filter = ['is_responded', 'created_at']
+    search_fields = ['thesis__title', 'requested_by__username', 'request_message']
+    readonly_fields = ['token', 'created_at', 'updated_at', 'student_link']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Request Information', {
+            'fields': ('thesis', 'requested_by', 'request_message')
+        }),
+        ('Response Status', {
+            'fields': ('is_responded', 'first_response_at', 'comment')
+        }),
+        ('Access', {
+            'fields': ('token', 'student_link'),
+            'description': 'Secure token for student access (generated automatically)'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def student_link(self, obj):
+        """
+        Display the student access URL in the admin interface.
+        """
+        from django.utils.html import format_html
+        url = obj.get_student_url()
+        full_url = f"https://example.com{url}"  # Replace with actual domain in production
+        return format_html('<a href="{}" target="_blank">{}</a>', full_url, full_url)
+
+    student_link.short_description = 'Student Access Link'

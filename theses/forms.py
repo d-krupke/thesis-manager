@@ -62,7 +62,7 @@ class MyForm(forms.ModelForm):
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import Thesis, Student, Supervisor, Comment
+from .models import Thesis, Student, Supervisor, Comment, FeedbackTemplate
 
 
 class ThesisForm(forms.ModelForm):
@@ -220,3 +220,55 @@ class UserCreationByAdminForm(forms.ModelForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('A user with this email address already exists.')
         return email
+
+
+class FeedbackRequestForm(forms.Form):
+    """
+    Form for supervisors to create feedback requests.
+
+    Allows selecting a template and customizing the message before sending.
+    """
+    template = forms.ModelChoiceField(
+        queryset=FeedbackTemplate.objects.filter(is_active=True),
+        required=False,
+        empty_label="Select a template (optional)",
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'template-select'}),
+        help_text="Choose a pre-made template or write your own message"
+    )
+
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 15,
+            'id': 'feedback-message',
+            'placeholder': 'Enter your feedback request message here...\n\nYou can use Markdown formatting.'
+        }),
+        help_text="The message that will be sent to students. Supports Markdown formatting.",
+        label="Request Message"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-fill with first active template if available
+        if not self.is_bound:
+            first_template = FeedbackTemplate.objects.filter(is_active=True).first()
+            if first_template:
+                self.initial['message'] = first_template.message
+                self.initial['template'] = first_template
+
+
+class FeedbackResponseForm(forms.Form):
+    """
+    Form for students to respond to feedback requests.
+
+    Simple textarea where students can edit their response (which is stored in a Comment).
+    """
+    response = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 20,
+            'placeholder': 'Enter your response here...\n\nYou can use Markdown formatting.'
+        }),
+        help_text="Edit your response to the feedback request. Supports Markdown formatting.",
+        label=""
+    )
