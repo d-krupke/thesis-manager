@@ -265,14 +265,14 @@ class FeedbackTemplateAdmin(admin.ModelAdmin):
 
     Allows managing reusable templates for feedback requests.
     """
-    list_display = ['name', 'is_active', 'created_at', 'updated_at']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['name', 'is_active', 'is_write_protected', 'created_at', 'updated_at']
+    list_filter = ['is_active', 'is_write_protected', 'created_at']
     search_fields = ['name', 'description', 'message']
     ordering = ['name']
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'is_active')
+            'fields': ('name', 'is_active', 'is_write_protected')
         }),
         ('Template Content', {
             'fields': ('message', 'description')

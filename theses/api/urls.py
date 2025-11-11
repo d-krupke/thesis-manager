@@ -74,7 +74,10 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from .viewsets import StudentViewSet, SupervisorViewSet, ThesisViewSet, CommentViewSet
+from .viewsets import (
+    StudentViewSet, SupervisorViewSet, ThesisViewSet, CommentViewSet,
+    FeedbackTemplateViewSet, FeedbackRequestViewSet
+)
 
 # DefaultRouter: Creates URL patterns for all ViewSets
 # Includes a default API root view that lists all endpoints
@@ -91,6 +94,8 @@ router.register(r'students', StudentViewSet, basename='api-student')
 router.register(r'supervisors', SupervisorViewSet, basename='api-supervisor')
 router.register(r'theses', ThesisViewSet, basename='api-thesis')
 router.register(r'comments', CommentViewSet, basename='api-comment')
+router.register(r'feedback-templates', FeedbackTemplateViewSet, basename='api-feedback-template')
+router.register(r'feedback-requests', FeedbackRequestViewSet, basename='api-feedback-request')
 
 urlpatterns = [
     # Include all router URLs

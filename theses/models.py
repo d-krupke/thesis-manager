@@ -303,6 +303,7 @@ class FeedbackTemplate(models.Model):
     message = models.TextField(help_text="Template message text (supports Markdown)")
     description = models.TextField(blank=True, help_text="Optional description of when to use this template")
     is_active = models.BooleanField(default=True, help_text="Is this template available for use?")
+    is_write_protected = models.BooleanField(default=False, help_text="Prevent users from editing or deleting this template")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

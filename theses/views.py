@@ -844,6 +844,93 @@ class AdminCreateUserView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return super().form_valid(form)
 
 
+# ============================
+# FEEDBACK TEMPLATE CRUD VIEWS
+# ============================
+
+class FeedbackTemplateListView(LoginRequiredMixin, ListView):
+    """
+    List view for feedback templates.
+
+    Shows all active templates with options to create, edit, and delete.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_list.html'
+    context_object_name = 'templates'
+    paginate_by = 50
+
+    def get_queryset(self):
+        return FeedbackTemplate.objects.all().order_by('-created_at')
+
+
+class FeedbackTemplateCreateView(LoginRequiredMixin, CreateView):
+    """
+    Create view for feedback templates.
+
+    Allows any logged-in user to create a new template.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_form.html'
+    fields = ['name', 'message', 'description', 'is_active']
+    success_url = reverse_lazy('feedback_template_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Template "{form.instance.name}" created successfully.')
+        return super().form_valid(form)
+
+
+class FeedbackTemplateUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Update view for feedback templates.
+
+    Prevents editing of write-protected templates.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_form.html'
+    fields = ['name', 'message', 'description', 'is_active']
+    success_url = reverse_lazy('feedback_template_list')
+
+    def test_func(self):
+        """Prevent editing of write-protected templates"""
+        template = self.get_object()
+        return not template.is_write_protected
+
+    def handle_no_permission(self):
+        """Show message when trying to edit write-protected template"""
+        messages.error(self.request, 'This template is write-protected and cannot be edited.')
+        return redirect('feedback_template_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Template "{form.instance.name}" updated successfully.')
+        return super().form_valid(form)
+
+
+class FeedbackTemplateDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    Delete view for feedback templates.
+
+    Prevents deletion of write-protected templates.
+    """
+    model = FeedbackTemplate
+    template_name = 'theses/feedback_template_confirm_delete.html'
+    success_url = reverse_lazy('feedback_template_list')
+
+    def test_func(self):
+        """Prevent deletion of write-protected templates"""
+        template = self.get_object()
+        return not template.is_write_protected
+
+    def handle_no_permission(self):
+        """Show message when trying to delete write-protected template"""
+        messages.error(self.request, 'This template is write-protected and cannot be deleted.')
+        return redirect('feedback_template_list')
+
+    def delete(self, request, *args, **kwargs):
+        template_name = self.get_object().name
+        messages.success(request, f'Template "{template_name}" deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
 # =======================
 # FEEDBACK REQUEST VIEWS
 # =======================

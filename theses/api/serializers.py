@@ -257,3 +257,80 @@ class ThesisCreateUpdateSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("At least one supervisor must be assigned to the thesis.")
         return value
+
+
+class FeedbackTemplateSerializer(serializers.ModelSerializer):
+    """Serializer for feedback templates"""
+
+    class Meta:
+        model = models.FeedbackTemplate
+        fields = (
+            'id', 'name', 'message', 'description',
+            'is_active', 'is_write_protected',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at', 'is_write_protected')
+
+
+class FeedbackRequestCreateSerializer(serializers.Serializer):
+    """Serializer for creating feedback requests via API"""
+    message = serializers.CharField(
+        help_text="The feedback request message to send to students"
+    )
+
+    def create(self, validated_data):
+        """Create a feedback request for a thesis"""
+        thesis = self.context['thesis']
+        user = self.context['request'].user
+
+        # Import here to avoid circular import
+        from ..models import Comment, FeedbackRequest
+
+        # Create comment to store the feedback
+        comment = Comment.objects.create(
+            thesis=thesis,
+            user=None,
+            text="[Awaiting student feedback]\n\n---\n\n**Request:**\n" + validated_data['message'],
+            is_auto_generated=False
+        )
+
+        # Create feedback request
+        feedback_request = FeedbackRequest.objects.create(
+            thesis=thesis,
+            comment=comment,
+            request_message=validated_data['message'],
+            requested_by=user
+        )
+
+        return feedback_request
+
+
+class FeedbackRequestSerializer(serializers.ModelSerializer):
+    """Serializer for feedback request details"""
+    thesis_id = serializers.IntegerField(source='thesis.id', read_only=True)
+    thesis_title = serializers.CharField(source='thesis.title', read_only=True)
+    requested_by_name = serializers.SerializerMethodField()
+    student_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.FeedbackRequest
+        fields = (
+            'id', 'thesis_id', 'thesis_title',
+            'request_message', 'is_responded', 'first_response_at',
+            'requested_by_name', 'student_url',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'is_responded', 'first_response_at', 'created_at', 'updated_at')
+
+    def get_requested_by_name(self, obj):
+        """Get the name of the user who requested feedback"""
+        if obj.requested_by:
+            return obj.requested_by.get_full_name() or obj.requested_by.username
+        return None
+
+    def get_student_url(self, obj):
+        """Get the full URL for students to respond"""
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.get_student_url())
+        return obj.get_student_url()

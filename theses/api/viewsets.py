@@ -354,6 +354,88 @@ class ThesisViewSet(viewsets.ModelViewSet):
         # Return 400 Bad Request with validation errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        description="Request feedback from students for this thesis",
+        request=FeedbackRequestCreateSerializer,
+        responses={201: FeedbackRequestSerializer}
+    )
+    @action(detail=True, methods=['post'])
+    def request_feedback(self, request, pk=None):
+        """
+        Custom endpoint: POST /api/theses/{id}/request_feedback/
+        Create a feedback request for this thesis.
+
+        The request will create a comment and send an email to students.
+        Requires a 'message' field with the feedback request text.
+        """
+        thesis = self.get_object()
+
+        # Deserialize and validate the request
+        serializer = FeedbackRequestCreateSerializer(
+            data=request.data,
+            context={'request': request, 'thesis': thesis}
+        )
+
+        if serializer.is_valid():
+            # Create the feedback request
+            feedback_request = serializer.save()
+
+            # Send email to students
+            from django.contrib.sites.shortcuts import get_current_site
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
+            from django.conf import settings
+
+            students = thesis.students.all()
+            if students:
+                student_emails = [s.email for s in students if s.email]
+                supervisor_emails = [s.email for s in thesis.supervisors.all() if s.email]
+
+                if student_emails:
+                    current_site = get_current_site(request)
+                    protocol = 'https' if request.is_secure() else 'http'
+                    feedback_url = f"{protocol}://{current_site.domain}{feedback_request.get_student_url()}"
+
+                    context = {
+                        'thesis': thesis,
+                        'request_message': serializer.validated_data['message'],
+                        'feedback_url': feedback_url,
+                        'requested_by': request.user,
+                    }
+
+                    subject = f'Feedback Request for Thesis: {thesis.title or "Your Thesis"}'
+                    text_message = render_to_string('emails/feedback_request.txt', context)
+
+                    try:
+                        html_message = render_to_string('emails/feedback_request.html', context)
+                    except:
+                        html_message = None
+
+                    try:
+                        email = EmailMultiAlternatives(
+                            subject=subject,
+                            body=text_message,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=student_emails,
+                            cc=supervisor_emails,
+                        )
+
+                        if html_message:
+                            email.attach_alternative(html_message, "text/html")
+
+                        email.send(fail_silently=True)
+                    except:
+                        pass  # Email failure shouldn't break API
+
+            # Return the created feedback request
+            response_serializer = FeedbackRequestSerializer(
+                feedback_request,
+                context={'request': request}
+            )
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @extend_schema_view(
     list=extend_schema(description="List all comments"),
@@ -401,3 +483,71 @@ class CommentViewSet(viewsets.ModelViewSet):
         This prevents users from creating comments as other users.
         """
         serializer.save(user=self.request.user)
+
+
+@extend_schema_view(
+    list=extend_schema(description="List all feedback templates"),
+    retrieve=extend_schema(description="Get feedback template details"),
+    create=extend_schema(description="Create a new feedback template"),
+    update=extend_schema(description="Update a feedback template"),
+    partial_update=extend_schema(description="Partially update a feedback template"),
+    destroy=extend_schema(description="Delete a feedback template"),
+)
+class FeedbackTemplateViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing feedback templates.
+
+    All authenticated users can view and create templates.
+    Write-protected templates cannot be edited or deleted.
+
+    Filtering options:
+    - ?is_active=true       → Show only active templates
+    - ?is_write_protected=false → Show only editable templates
+    """
+    queryset = models.FeedbackTemplate.objects.all().order_by('name')
+    serializer_class = FeedbackTemplateSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['is_active', 'is_write_protected']
+    search_fields = ['name', 'description', 'message']
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    ordering = ['name']
+
+    def perform_update(self, serializer):
+        """Prevent updates to write-protected templates"""
+        if serializer.instance.is_write_protected:
+            raise PermissionDenied("This template is write-protected and cannot be edited.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Prevent deletion of write-protected templates"""
+        if instance.is_write_protected:
+            raise PermissionDenied("This template is write-protected and cannot be deleted.")
+        instance.delete()
+
+
+@extend_schema_view(
+    list=extend_schema(description="List all feedback requests"),
+    retrieve=extend_schema(description="Get feedback request details"),
+)
+class FeedbackRequestViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for viewing feedback requests.
+
+    This is a read-only viewset. To create feedback requests, use the
+    custom action on the ThesisViewSet: POST /api/theses/{id}/request_feedback/
+
+    Filtering options:
+    - ?thesis=5           → Show requests for thesis #5
+    - ?is_responded=true  → Show only responded requests
+    - ?requested_by=3     → Show requests created by user #3
+    """
+    queryset = models.FeedbackRequest.objects.select_related(
+        'thesis', 'comment', 'requested_by'
+    ).all()
+    serializer_class = FeedbackRequestSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['thesis', 'is_responded', 'requested_by']
+    ordering_fields = ['created_at', 'first_response_at']
+    ordering = ['-created_at']

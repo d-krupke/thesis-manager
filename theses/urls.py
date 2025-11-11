@@ -100,6 +100,12 @@ urlpatterns = [
     # Admin User Management URLs
     path('users/create/', views.AdminCreateUserView.as_view(), name='admin_create_user'),
 
+    # Feedback Template Management URLs
+    path('templates/', views.FeedbackTemplateListView.as_view(), name='feedback_template_list'),
+    path('templates/new/', views.FeedbackTemplateCreateView.as_view(), name='feedback_template_create'),
+    path('templates/<int:pk>/edit/', views.FeedbackTemplateUpdateView.as_view(), name='feedback_template_edit'),
+    path('templates/<int:pk>/delete/', views.FeedbackTemplateDeleteView.as_view(), name='feedback_template_delete'),
+
     # Feedback Request URLs
     path('thesis/<int:thesis_pk>/request-feedback/', views.feedback_request_create, name='feedback_request_create'),
     path('feedback/<str:token>/', views.feedback_respond, name='feedback_respond'),

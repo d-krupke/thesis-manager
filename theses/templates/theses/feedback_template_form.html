@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Template - Thesis Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 offset-lg-1">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{% if object %}Edit{% else %}Create{% endif %} Feedback Template</h1>
+            <a href="{% url 'feedback_template_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+
+        {% if object.is_write_protected %}
+        <div class="alert alert-warning">
+            <i class="bi bi-lock-fill"></i> <strong>Write-Protected Template:</strong>
+            This template is write-protected and cannot be edited.
+        </div>
+        {% endif %}
+
+        <form method="post" class="card">
+            {% csrf_token %}
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">Template Name *</label>
+                    <input type="text" name="name" value="{{ form.name.value|default:'' }}" class="form-control {% if form.name.errors %}is-invalid{% endif %}" id="{{ form.name.id_for_label }}" required>
+                    {% if form.name.help_text %}
+                    <div class="form-text">{{ form.name.help_text }}</div>
+                    {% endif %}
+                    {% if form.name.errors %}
+                    <div class="invalid-feedback">{{ form.name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                    <textarea name="description" class="form-control {% if form.description.errors %}is-invalid{% endif %}" id="{{ form.description.id_for_label }}" rows="2">{{ form.description.value|default:'' }}</textarea>
+                    <div class="form-text">Brief description of when to use this template</div>
+                    {% if form.description.errors %}
+                    <div class="invalid-feedback">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.message.id_for_label }}" class="form-label">Template Message *</label>
+                    <textarea name="message" class="form-control {% if form.message.errors %}is-invalid{% endif %}" id="{{ form.message.id_for_label }}" rows="15" required>{{ form.message.value|default:'' }}</textarea>
+                    <div class="form-text">
+                        The message that will be sent to students. Supports Markdown formatting.
+                        <br><strong>Tip:</strong> Use placeholders and clear structure for students to fill in their responses.
+                    </div>
+                    {% if form.message.errors %}
+                    <div class="invalid-feedback">{{ form.message.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" name="is_active" class="form-check-input" id="{{ form.is_active.id_for_label }}" {% if form.is_active.value %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                        Active (available for use in feedback requests)
+                    </label>
+                    {% if form.is_active.errors %}
+                    <div class="invalid-feedback">{{ form.is_active.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Markdown Tips:</strong>
+                    <ul class="mb-0">
+                        <li><code>**bold**</code> for bold text</li>
+                        <li><code>*italic*</code> for italic text</li>
+                        <li><code># Heading</code> for headings</li>
+                        <li><code>- Item</code> for bullet points</li>
+                        <li><code>1. Item</code> for numbered lists</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> {% if object %}Update{% else %}Create{% endif %} Template
+                </button>
+                <a href="{% url 'feedback_template_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
