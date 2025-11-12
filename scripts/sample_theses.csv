@@ -1,0 +1,6 @@
+Name,Vorname,Email-Adresse,Anmeldung Datum,Abgabe  Datum,Studiengang,Semesterzahl,ALG-Veranstaltungen,B/M/P,Matr. Nr.,Erstkontakt,Aufgabenst. u. Betreuer,Thema,Noten,Literatur- Recherche,abgegeben am,Vortrag am,Betreuer WMA,Zweitgutachter,Note,Besch. 4,0 + Vortr.
+Müller,Anna,anna.mueller@student.uni.de,15.03.2023,15.09.2023,Informatik,6,Ja,B,123456,01.02.2023,Prof. Dr. Schmidt,Efficient Algorithms for Large-Scale Graph Processing,,Abgeschlossen,10.09.2023,20.09.2023,Prof. Dr. Schmidt,Dr. Weber,1.3,Sehr gute Arbeit
+Schmidt,Thomas,thomas.schmidt@student.uni.de,20.04.2023,20.10.2023,Informatik,8,Ja,M,234567,15.03.2023,Prof. Dr. Müller / Dr. Klein,Machine Learning Applications in Autonomous Systems,,In Arbeit,,,,Prof. Dr. Müller,Prof. Dr. Fischer,,
+Weber,Julia,,10.05.2023,10.11.2023,Wirtschaftsinformatik,4,,B,345678,25.04.2023,Prof. Schmidt,Blockchain-based Supply Chain Management,,,05.11.2023,12.11.2023,Prof. Dr. Schmidt,,2.0,
+Fischer,Michael,m.fischer@student.uni.de,,,Informatik,6,Nein,P,456789,10.01.2023,Dr. Weber,Development of a Mobile Application for Campus Navigation,,Abgebrochen,,,,Dr. Weber,,,Kontakt abgebrochen
+Klein,Sarah,sarah.klein@student.uni.de,01.10.2023,01.04.2024,Medieninformatik,4,Ja,B,567890,15.09.2023,Prof. Dr. Müller,Interactive Data Visualization for Social Media Analytics,,Literaturrecherche,,,,Prof. Dr. Müller,Dr. Schmidt,,
