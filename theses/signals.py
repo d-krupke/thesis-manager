@@ -330,6 +330,14 @@ def send_comment_notification_email(sender, instance, created, **kwargs):
     # Collect email addresses
     recipient_emails = [supervisor.email for supervisor in supervisors]
 
+    # Check if this comment is a feedback response (has associated FeedbackRequest)
+    # If so, add student emails as Reply-To for quick supervisor responses
+    student_reply_to = []
+    if hasattr(instance, 'feedbackrequest'):
+        # This is a feedback response - get student emails
+        students = thesis.students.filter(email__isnull=False).exclude(email='')
+        student_reply_to = [student.email for student in students]
+
     try:
         # Render plain text version
         try:
@@ -358,11 +366,13 @@ This is an automated notification from Thesis Manager.
             html_message = None
 
         # Create email with both plain text and HTML alternatives
+        # Add student reply_to if this is a feedback response
         email = EmailMultiAlternatives(
             subject=subject,
             body=text_message,  # Plain text version (fallback)
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=recipient_emails,
+            reply_to=student_reply_to if student_reply_to else None,
         )
 
         # Attach HTML version if available
