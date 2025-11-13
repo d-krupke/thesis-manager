@@ -95,7 +95,7 @@ def prompt_choice(question: str, choices: List[str], allow_none: bool = True) ->
 async def import_single_row(
     agent: ThesisCSVImportAgent,
     tool: CSVImportTool,
-    row_data,
+    row_dict: Dict[str, Any],
     interactive: bool = True
 ) -> bool:
     """
@@ -104,18 +104,27 @@ async def import_single_row(
     Args:
         agent: Import agent
         tool: Import tool
-        row_data: CSV row data
+        row_dict: Raw CSV row dictionary
         interactive: Whether to ask for user confirmation
 
     Returns:
         True if imported successfully, False otherwise
     """
+    row_index = row_dict.get('_row_index', '?')
+
     print("\n" + "=" * 80)
-    print(f"ROW {row_data.row_index}: {row_data.vorname} {row_data.name}")
+    print(f"ROW {row_index}")
     print("=" * 80)
 
+    # Show raw CSV data
+    print("\n📄 CSV Data:")
+    for key, value in row_dict.items():
+        if key == '_row_index':
+            continue
+        print(f"  {key}: {value}")
+
     # Parse the row
-    parsed = await agent.parse_csv_row(row_data)
+    parsed = await agent.parse_csv_row(row_index, row_dict)
 
     if not parsed.success or not parsed.thesis_info:
         print(f"❌ ERROR: {parsed.error_message}")
@@ -382,7 +391,7 @@ async def main():
 
     # Filter rows if starting from a specific row
     if args.start_from > 1:
-        rows = [r for r in rows if r.row_index >= args.start_from]
+        rows = [r for r in rows if r.get('_row_index', 0) >= args.start_from]
         print(f"Starting from row {args.start_from} ({len(rows)} rows remaining)")
 
     # Process rows

@@ -264,23 +264,7 @@ class CSVImportTool:
         Returns:
             Created thesis dictionary or None if failed
         """
-        # Build description from various fields
-        description_parts = []
-
-        if thesis_info.degree_program:
-            description_parts.append(f"Degree Program: {thesis_info.degree_program}")
-
-        if thesis_info.semester_count:
-            description_parts.append(f"Semester: {thesis_info.semester_count}")
-
-        if thesis_info.description:
-            description_parts.append(f"\nNotes: {thesis_info.description}")
-
-        if thesis_info.grade:
-            description_parts.append(f"\nGrade: {thesis_info.grade}")
-
-        description = "\n".join(description_parts) if description_parts else None
-
+        # Use description directly from thesis_info (AI agent builds it)
         result = self.client.create_thesis(
             thesis_type=thesis_info.thesis_type,
             student_ids=student_ids,
@@ -291,7 +275,7 @@ class CSVImportTool:
             date_registration=thesis_info.date_registration,
             date_deadline=thesis_info.date_deadline,
             date_presentation=thesis_info.date_presentation,
-            description=description,
+            description=thesis_info.description,
             task_description=thesis_info.task_description
         )
 

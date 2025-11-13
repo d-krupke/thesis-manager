@@ -1,21 +1,23 @@
 """
 PydanticAI Agent for importing thesis data from CSV files.
 
-This agent uses PydanticAI to intelligently parse CSV data and import it
-into the Thesis Manager system with user confirmation at each step.
+This agent intelligently parses ARBITRARY CSV formats - it doesn't require specific
+column names or structure. It uses AI to understand chaotic, real-world thesis data.
 """
 
 import csv
+import json
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pathlib import Path
+from datetime import datetime
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent
 from pydantic import BaseModel, Field
 
 from utils.thesis_manager_client import ThesisManagerClient
 from utils.csv_import_tool import CSVImportTool
-from utils.csv_import_models import CSVRowData, ThesisInfo, StudentInfo, SupervisorInfo
+from utils.csv_import_models import ThesisInfo
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +27,14 @@ class ParsedCSVRow(BaseModel):
     success: bool = Field(description="Whether parsing was successful")
     thesis_info: Optional[ThesisInfo] = Field(None, description="Extracted thesis information")
     error_message: Optional[str] = Field(None, description="Error message if parsing failed")
-    warnings: List[str] = Field(default_factory=list, description="List of warnings")
 
 
 class ThesisCSVImportAgent:
     """
     Agent for importing thesis data from CSV files using PydanticAI.
+
+    This agent can handle chaotic CSV files with varying column names, missing data,
+    and non-uniform formats - exactly what you get from handcrafted spreadsheets.
     """
 
     def __init__(self, client: ThesisManagerClient, model: str = "claude-3-5-sonnet-20241022"):
@@ -54,169 +58,152 @@ class ThesisCSVImportAgent:
 
     def _get_parser_system_prompt(self) -> str:
         """Get the system prompt for the CSV parser agent."""
-        return """You are an expert at parsing thesis data from German CSV files.
+        return """You are an expert at extracting thesis data from messy, handcrafted CSV/spreadsheet rows.
 
-Your task is to extract structured thesis information from CSV rows that contain:
-- Student information (Name, Vorname, Email, Matr. Nr.)
-- Supervisor information (may be in free text fields like "Aufgabenst. u. Betreuer", "Betreuer WMA", "Zweitgutachter")
-- Thesis details (B/M/P for type, Thema for title, various dates)
-- Additional metadata (Studiengang, Semesterzahl, grades, etc.)
+Your task is to extract ONLY the information that goes into the Thesis Manager system:
 
-Guidelines:
-1. Extract all available information, even if incomplete
-2. Parse dates in various formats (DD.MM.YYYY, YYYY-MM-DD, etc.) to YYYY-MM-DD
-3. Identify supervisors from text fields - they may contain names, roles, or be empty
-4. Map B/M/P to bachelor/master/project thesis types
-5. Infer the current phase from available dates:
-   - If "abgegeben am" (submitted) is filled: phase is 'submitted' or later
-   - If "Vortrag am" (presentation) is filled: phase is 'defended' or later
-   - If "Note" (grade) is filled: phase is 'completed'
-   - If only early dates: phase is 'first_contact', 'registered', or 'working'
-   - If data looks abandoned (no activity): phase is 'abandoned'
-6. Handle missing or malformed data gracefully - mark fields as missing
-7. Generate warnings for data quality issues
+**REQUIRED TO EXTRACT:**
+1. Student: first name, last name (required), email (if available), student ID/Matr.Nr. (if available)
+2. Thesis Type: bachelor, master, project, or other (look for B/M/P, "Bachelor", "Master", etc.)
 
-Be thorough and extract as much as possible to help migrate legacy data."""
+**OPTIONAL TO EXTRACT:**
+3. Supervisors: Extract names of supervisors/advisors/reviewers from any text fields
+   - Look for titles like "Prof.", "Dr.", "Prof. Dr."
+   - Names may be in fields like "Betreuer", "Aufgabenstellung", "Zweitgutachter", etc.
+   - Extract multiple supervisors if present
+   - Try to identify email addresses if mentioned
 
-    async def parse_csv_row(self, row_data: CSVRowData) -> ParsedCSVRow:
+4. Thesis details:
+   - Title/topic/theme
+   - Phase: Infer from available data (completed if grade exists, submitted if submission date exists, abandoned if no recent activity, etc.)
+
+5. Dates (convert to YYYY-MM-DD format):
+   - First contact (Erstkontakt)
+   - Registration (Anmeldung)
+   - Deadline (Abgabe, Abgabedatum)
+   - Presentation (Vortrag, Kolloquium)
+
+6. Additional notes: Any other relevant info (degree program, grade, semester) goes into description field
+
+**IMPORTANT:**
+- Column names vary wildly - use context and content to understand meaning
+- Handle German terms, abbreviations, misspellings
+- Parse dates flexibly (DD.MM.YYYY, YYYY-MM-DD, D.M.YY, etc.)
+- Missing data is OK - extract what you can
+- If student name is missing => mark as error
+- If thesis type is unclear => use 'other'
+- Add warnings for data quality issues
+
+**OUTPUT:**
+Return ThesisInfo with all extracted data. Be flexible and pragmatic - this is migration from messy real-world data."""
+
+    async def parse_csv_row(self, row_index: int, row_dict: Dict[str, Any]) -> ParsedCSVRow:
         """
         Parse a single CSV row using the PydanticAI agent.
 
         Args:
-            row_data: CSV row data
+            row_index: Row number (for user feedback)
+            row_dict: Raw CSV row as dictionary (column_name -> value)
 
         Returns:
             Parsed thesis information
         """
-        # Build a prompt from the row data
-        prompt = f"""Parse the following thesis data from CSV row {row_data.row_index}:
+        # Format the row data as JSON for the agent
+        row_json = json.dumps(row_dict, indent=2, ensure_ascii=False)
 
-Student:
-- Name (last name): {row_data.name or 'MISSING'}
-- Vorname (first name): {row_data.vorname or 'MISSING'}
-- Email: {row_data.email or 'MISSING'}
-- Matr. Nr.: {row_data.matr_nr or 'MISSING'}
+        prompt = f"""Extract thesis data from CSV row {row_index}:
 
-Thesis:
-- Type (B/M/P): {row_data.thesis_type or 'MISSING'}
-- Thema (topic): {row_data.thema or 'MISSING'}
+```json
+{row_json}
+```
 
-Dates:
-- Erstkontakt (first contact): {row_data.erstkontakt or 'MISSING'}
-- Anmeldung Datum (registration): {row_data.anmeldung_datum or 'MISSING'}
-- Abgabe Datum (deadline): {row_data.abgabe_datum or 'MISSING'}
-- abgegeben am (submitted): {row_data.abgegeben_am or 'MISSING'}
-- Vortrag am (presentation): {row_data.vortrag_am or 'MISSING'}
-
-Supervisors/Reviewers:
-- Aufgabenst. u. Betreuer: {row_data.aufgabenstellung_betreuer or 'MISSING'}
-- Betreuer WMA: {row_data.betreuer_wma or 'MISSING'}
-- Zweitgutachter (second reviewer): {row_data.zweitgutachter or 'MISSING'}
-
-Additional:
-- Studiengang (degree program): {row_data.studiengang or 'MISSING'}
-- Semesterzahl: {row_data.semesterzahl or 'MISSING'}
-- Note (grade): {row_data.note or 'MISSING'}
-- Noten: {row_data.noten or 'MISSING'}
-- Literatur-Recherche: {row_data.literatur_recherche or 'MISSING'}
-- Beschreibung: {row_data.beschreibung or 'MISSING'}
-
-Extract all available information into the structured format."""
+Extract all available thesis information. This is real-world migration data - be flexible with column names and formats."""
 
         try:
             result = await self.parser_agent.run(prompt)
             return result.data
         except Exception as e:
-            logger.error("Error parsing row %d: %s", row_data.row_index, e)
+            logger.error("Error parsing row %d: %s", row_index, e)
+            logger.debug("Row data was: %s", row_dict)
             return ParsedCSVRow(
                 success=False,
                 error_message=f"Failed to parse: {str(e)}"
             )
 
-    def read_csv_file(self, csv_file: Path) -> List[CSVRowData]:
+    def read_csv_file(self, csv_file: Path) -> List[Dict[str, Any]]:
         """
-        Read a CSV file and convert to CSVRowData objects.
+        Read a CSV file and return raw rows as dictionaries.
 
         Args:
             csv_file: Path to CSV file
 
         Returns:
-            List of CSVRowData objects
+            List of dictionaries (one per CSV row)
         """
         rows = []
 
         with open(csv_file, 'r', encoding='utf-8') as f:
-            # Try to detect dialect
-            sample = f.read(1024)
+            # Try to detect delimiter
+            sample = f.read(2048)
             f.seek(0)
-            dialect = csv.Sniffer().sniff(sample)
+
+            try:
+                dialect = csv.Sniffer().sniff(sample)
+            except:
+                # Fall back to comma
+                dialect = csv.excel()
 
             reader = csv.DictReader(f, dialect=dialect)
 
             for i, row in enumerate(reader):
-                # Map CSV columns to CSVRowData fields
-                row_data = CSVRowData(
-                    row_index=i + 2,  # +2 because of 0-index and header row
-                    name=row.get('Name'),
-                    vorname=row.get('Vorname'),
-                    email=row.get('Email-Adresse'),
-                    anmeldung_datum=row.get('Anmeldung Datum'),
-                    abgabe_datum=row.get('Abgabe  Datum') or row.get('Abgabe Datum'),  # Handle extra space
-                    studiengang=row.get('Studiengang'),
-                    semesterzahl=row.get('Semesterzahl'),
-                    alg_veranstaltungen=row.get('ALG-Veranstaltungen'),
-                    thesis_type=row.get('B/M/P'),
-                    matr_nr=row.get('Matr. Nr.'),
-                    erstkontakt=row.get('Erstkontakt'),
-                    aufgabenstellung_betreuer=row.get('Aufgabenst. u. Betreuer'),
-                    thema=row.get('Thema'),
-                    noten=row.get('Noten'),
-                    literatur_recherche=row.get('Literatur- Recherche') or row.get('Literatur-Recherche'),
-                    abgegeben_am=row.get('abgegeben am'),
-                    vortrag_am=row.get('Vortrag am'),
-                    betreuer_wma=row.get('Betreuer WMA'),
-                    zweitgutachter=row.get('Zweitgutachter'),
-                    note=row.get('Note'),
-                    beschreibung=row.get('Besch. 4,0 + Vortr.')
-                )
+                # Clean up the row: remove empty values and strip whitespace
+                cleaned_row = {}
+                for key, value in row.items():
+                    if key is None:  # Handle unnamed columns
+                        continue
+                    if value is None or str(value).strip() == '':
+                        continue
+                    cleaned_row[key.strip()] = str(value).strip()
 
                 # Skip completely empty rows
-                if not any([
-                    row_data.name, row_data.vorname, row_data.thesis_type,
-                    row_data.thema, row_data.email
-                ]):
-                    logger.debug("Skipping empty row %d", row_data.row_index)
+                if not cleaned_row:
+                    logger.debug("Skipping empty row %d", i + 2)
                     continue
 
-                rows.append(row_data)
+                # Add row index for tracking
+                cleaned_row['_row_index'] = i + 2  # +2 for header and 0-indexing
+
+                rows.append(cleaned_row)
 
         logger.info("Read %d non-empty rows from CSV", len(rows))
         return rows
 
     async def process_row(
         self,
-        row_data: CSVRowData,
+        row_dict: Dict[str, Any],
         dry_run: bool = False
     ) -> bool:
         """
-        Process a single CSV row: parse, match, and import.
+        Process a single CSV row: parse, match, and show summary.
 
         Args:
-            row_data: CSV row data
+            row_dict: Raw CSV row dictionary
             dry_run: If True, only analyze without making changes
 
         Returns:
             True if processed successfully, False otherwise
         """
+        row_index = row_dict.get('_row_index', '?')
+
         logger.info("\n" + "="*80)
-        logger.info("Processing row %d: %s", row_data.row_index, row_data)
+        logger.info("Processing row %s", row_index)
         logger.info("="*80)
 
         # Parse the row using the agent
-        parsed = await self.parse_csv_row(row_data)
+        parsed = await self.parse_csv_row(row_index, row_dict)
 
         if not parsed.success or not parsed.thesis_info:
-            logger.error("Failed to parse row %d: %s", row_data.row_index, parsed.error_message)
+            logger.error("Failed to parse row %s: %s", row_index, parsed.error_message)
             return False
 
         thesis_info = parsed.thesis_info
