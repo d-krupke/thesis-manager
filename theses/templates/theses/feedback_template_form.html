@@ -10,6 +10,14 @@
             <a href="{% url 'feedback_template_list' %}" class="btn btn-outline-secondary">Cancel</a>
         </div>
 
+        <div class="alert alert-info mb-3">
+            <strong>About Templates:</strong> Templates can be used in two ways:
+            <ol class="mb-0">
+                <li><strong>Automated emails:</strong> Select when creating feedback requests to send automated emails to students</li>
+                <li><strong>Manual copy-paste:</strong> Copy template text into your own email client for personal communication</li>
+            </ol>
+        </div>
+
         {% if object.is_write_protected %}
         <div class="alert alert-warning">
             <i class="bi bi-lock-fill"></i> <strong>Write-Protected Template:</strong>
@@ -50,8 +58,9 @@
                     <label for="{{ form.message.id_for_label }}" class="form-label">Template Message *</label>
                     <textarea name="message" class="form-control {% if form.message.errors %}is-invalid{% endif %}" id="{{ form.message.id_for_label }}" rows="15" required>{{ form.message.value|default:'' }}</textarea>
                     <div class="form-text">
-                        The message that will be sent to students. Supports Markdown formatting.
+                        The message that will be sent to students or copied for manual emails. Supports Markdown formatting.
                         <br><strong>Tip:</strong> Use placeholders and clear structure for students to fill in their responses.
+                        <br><strong>Note:</strong> This text can be used in automated emails or copied into your own email client.
                     </div>
                     {% if form.message.errors %}
                     <div class="invalid-feedback">{{ form.message.errors }}</div>
