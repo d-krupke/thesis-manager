@@ -42,7 +42,6 @@
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-success copy-btn"
                             data-template-id="{{ template.pk }}"
-                            data-template-message="{{ template.message|escapejs }}"
                             title="Copy message to clipboard">
                         <i class="bi bi-clipboard"></i> Copy
                     </button>
@@ -116,7 +115,17 @@
 // Copy template message to clipboard
 document.querySelectorAll('.copy-btn').forEach(button => {
     button.addEventListener('click', function() {
-        const message = this.getAttribute('data-template-message');
+        // Get the template ID and find the corresponding pre element
+        const templateId = this.getAttribute('data-template-id');
+        const preElement = document.getElementById('template-message-' + templateId);
+
+        if (!preElement) {
+            alert('Could not find template message.');
+            return;
+        }
+
+        // Get the raw text content (without HTML encoding issues)
+        const message = preElement.textContent;
         const btn = this;
         const originalHtml = btn.innerHTML;
 
