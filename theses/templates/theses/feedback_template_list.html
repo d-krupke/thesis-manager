@@ -11,8 +11,13 @@
 </div>
 
 <div class="alert alert-info">
-    <strong>About Templates:</strong> Templates provide pre-written messages for common feedback requests.
-    You can create your own templates or use the default ones. Write-protected templates cannot be edited or deleted.
+    <strong>About Templates:</strong> Templates provide pre-written messages for requesting student feedback.
+    <br><strong>Two ways to use them:</strong>
+    <ol class="mb-0 mt-2">
+        <li><strong>Automated sending:</strong> Use templates when creating a feedback request to send automated emails to students</li>
+        <li><strong>Copy & paste:</strong> Copy template text directly into your own email client for manual communication</li>
+    </ol>
+    <small class="text-muted mt-2 d-block">Write-protected templates cannot be edited or deleted.</small>
 </div>
 
 {% if templates %}
@@ -35,6 +40,11 @@
                     </div>
                 </div>
                 <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success copy-btn"
+                            data-template-id="{{ template.pk }}"
+                            title="Copy message to clipboard">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
                     {% if not template.is_write_protected %}
                     <a href="{% url 'feedback_template_edit' template.pk %}" class="btn btn-outline-primary" title="Edit">
                         <i class="bi bi-pencil"></i>
@@ -55,8 +65,8 @@
                     <strong>Use case:</strong> {{ template.description }}
                 </p>
                 {% endif %}
-                <div class="border-start border-3 ps-3 small" style="max-height: 200px; overflow-y: auto;">
-                    <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ template.message|truncatewords:100 }}</pre>
+                <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                    <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.9rem; font-family: inherit;" id="template-message-{{ template.pk }}">{{ template.message }}</pre>
                 </div>
             </div>
             <div class="card-footer text-muted small">
@@ -100,4 +110,65 @@
     <p class="mb-0">No templates found. <a href="{% url 'feedback_template_create' %}">Create your first template</a> to get started.</p>
 </div>
 {% endif %}
+
+<script>
+// Copy template message to clipboard
+document.querySelectorAll('.copy-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        // Get the template ID and find the corresponding pre element
+        const templateId = this.getAttribute('data-template-id');
+        const preElement = document.getElementById('template-message-' + templateId);
+
+        if (!preElement) {
+            alert('Could not find template message.');
+            return;
+        }
+
+        // Get the raw text content (without HTML encoding issues)
+        const message = preElement.textContent;
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+
+        // Use the Clipboard API
+        navigator.clipboard.writeText(message).then(function() {
+            // Success feedback
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Copied!';
+            btn.classList.remove('btn-outline-success');
+            btn.classList.add('btn-success');
+
+            // Reset after 2 seconds
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-success');
+            }, 2000);
+        }).catch(function(err) {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = message;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Copied!';
+                btn.classList.remove('btn-outline-success');
+                btn.classList.add('btn-success');
+
+                setTimeout(function() {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-success');
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy text. Please copy manually.');
+            }
+
+            document.body.removeChild(textarea);
+        });
+    });
+});
+</script>
 {% endblock %}
