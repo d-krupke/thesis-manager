@@ -219,6 +219,20 @@ def check_thesis_warnings(thesis: Thesis) -> List[ThesisWarning]:
             urgency=WarningUrgency.WARNING  # WARNING (yellow) - supervisor can be added later
         ))
 
+    # ========================================================================
+    # CHECK 8: Student(s) without email address on active thesis
+    # ========================================================================
+    students_without_email = thesis.students.filter(email__isnull=True) | thesis.students.filter(email='')
+    if students_without_email.exists():
+        student_names = ', '.join([str(s) for s in students_without_email])
+        warnings.append(ThesisWarning(
+            thesis_id=thesis.id,
+            student_name=student_name,
+            thesis_title=thesis_title,
+            message=f"Student(s) without email address: {student_names}",
+            urgency=WarningUrgency.WARNING  # WARNING (yellow) - prevents feedback requests
+        ))
+
     return warnings
 
 

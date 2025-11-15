@@ -272,9 +272,15 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Comments</h5>
-                <a href="{% url 'feedback_request_create' thesis.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-envelope"></i> Request Feedback
-                </a>
+                {% if thesis.has_students_without_email %}
+                    <button class="btn btn-sm btn-outline-secondary" disabled title="All students need email addresses to request feedback">
+                        <i class="bi bi-envelope-slash"></i> Request Feedback (No Email)
+                    </button>
+                {% else %}
+                    <a href="{% url 'feedback_request_create' thesis.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Request Feedback
+                    </a>
+                {% endif %}
             </div>
             <div class="card-body">
                 <!-- Add Comment Form -->

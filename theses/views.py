@@ -945,6 +945,17 @@ def feedback_request_create(request, thesis_pk):
     """
     thesis = get_object_or_404(Thesis.objects.prefetch_related('students', 'supervisors'), pk=thesis_pk)
 
+    # Check if any students lack email addresses
+    students_without_email = thesis.students.filter(email__isnull=True) | thesis.students.filter(email='')
+    if students_without_email.exists():
+        student_names = ', '.join([str(s) for s in students_without_email])
+        messages.error(
+            request,
+            f'Cannot create feedback request: The following student(s) do not have email addresses: {student_names}. '
+            f'Please add email addresses to these students before requesting feedback.'
+        )
+        return redirect('thesis_detail', pk=thesis_pk)
+
     if request.method == 'POST':
         form = FeedbackRequestForm(request.POST)
         if form.is_valid():

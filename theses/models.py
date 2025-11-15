@@ -66,7 +66,7 @@ class Student(models.Model):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
     student_id = models.CharField(max_length=50, blank=True, null=True)
     comments = models.TextField(blank=True, help_text="Free text comments about the student")
     # auto_now_add=True: Sets timestamp automatically when record is created (never changes)
@@ -256,6 +256,17 @@ class Thesis(models.Model):
     def primary_supervisor(self):
         """Returns the first supervisor (for UI purposes)"""
         return self.supervisors.first()
+
+    @property
+    def has_students_without_email(self):
+        """
+        Check if any students assigned to this thesis lack email addresses.
+
+        Returns True if at least one student has no email address (null or empty).
+        This is used to prevent feedback requests when students can't receive emails.
+        """
+        return self.students.filter(email__isnull=True).exists() or \
+               self.students.filter(email='').exists()
 
 
 class Comment(models.Model):
